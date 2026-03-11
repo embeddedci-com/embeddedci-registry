@@ -1,0 +1,29 @@
+type: boot
+repo: https://github.com/u-boot/u-boot.git
+ref: v2026.01
+arch: arm64
+config:
+  defconfig: qemu_arm64_defconfig
+  ref: "{{ref}}"
+  arch: "{{arch}}"
+  uboot_src: "{{build_root}}/uboot_src"
+
+default_vars:
+  ref: v2026.01
+  arch: arm64
+
+scripts:
+  build: scripts/build.sh
+
+dependencies:
+  - pack: fetch
+    artifact: uboot_src
+    as: uboot_src
+
+artifacts:
+  - path: u-boot.bin
+    source_key: fetch::uboot_src
+
+skip:
+  check_paths:
+    - u-boot.bin

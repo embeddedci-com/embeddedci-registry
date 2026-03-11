@@ -1,0 +1,31 @@
+type: board
+# board architecture
+arch: arm64
+cross_compile: aarch64-linux-gnu-
+boot: qemu
+# platform settings
+platform: virt
+# root file system settings
+rootfs_device: /dev/vdb
+rootfs_type: ext4
+# console
+console: ttyAMA0
+# kernel config
+defconfig: defconfig
+kernel_config:
+  - enable:CONFIG_VIRTIO
+  - enable:CONFIG_VIRTIO_PCI
+  - enable:CONFIG_VIRTIO_BLK
+  - enable:CONFIG_VIRTIO_NET
+  - enable:CONFIG_SERIAL_AMBA_PL011
+  - enable:CONFIG_EFI
+  - enable:CONFIG_EFI_STUB
+
+# u-boot config
+uboot_defconfig: qemu_arm64_defconfig
+enable_distro_boot: false
+enable_bootstd: false
+
+# toolchain settings
+cc: aarch64-linux-musl-gcc
+busybox_static: false

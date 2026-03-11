@@ -1,0 +1,16 @@
+type: test
+scripts: {}
+
+test_config:
+  boot_success_pattern: ""
+
+default_vars:
+  lease_minutes: "30"
+
+config:
+  platform: "{{platform}}"
+  lease_minutes: "{{lease_minutes}}"
+  boot_success_pattern: "{{boot_success_pattern}}"
+
+dependencies: []
+artifacts: []

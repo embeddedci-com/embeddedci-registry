@@ -1,0 +1,34 @@
+type: rootfs
+kind: initramfs-busybox
+busybox:
+  repo: https://github.com/embeddedci-com/busybox-mirror
+  ref: "1_36_1"
+  config: configs/busybox-min.config
+  artifact: /build/initramfs.cpio.gz
+init:
+  rdinit: /init
+
+default_vars:
+  ref: "1_36_1"
+
+scripts:
+  build: scripts/build.sh
+
+dependencies:
+  - pack: fetch
+    artifact: busybox_src
+    as: busybox_src
+
+artifacts:
+  - path: initramfs.cpio.gz
+    build_path: "{{_artifact_build_path}}"
+
+skip:
+  check_paths:
+    - initramfs.cpio.gz
+
+config:
+  ref: "{{ref}}"
+  busybox_src: "{{build_root}}/busybox_src"
+env_from_project:
+  CONFIG_FILE: configs/busybox-min.config

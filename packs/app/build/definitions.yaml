@@ -1,0 +1,18 @@
+type: app
+scripts:
+  build: scripts/build.sh
+
+default_vars: {}
+
+dependencies: []
+
+artifacts:
+  - path_var: artifact
+    path_prefix: "out/app-build/"
+
+config:
+  cmd: "{{cmd}}"
+  src: "{{src}}"
+  artifact: "{{artifact}}"
+  out: "{{out}}"
+  dst: "{{dst}}"

@@ -1,0 +1,31 @@
+type: kernel
+repo: https://github.com/torvalds/linux.git
+ref: v6.6
+config:
+  defconfig: defconfig
+  ref: "{{ref}}"
+  arch: "{{arch}}"
+  kernel_src: "{{build_root}}/kernel_src"
+  kernel_image: "{{build_root}}/kernel/{{arch_image_name}}"
+
+default_vars:
+  ref: v6.6
+  arch: arm64
+
+scripts:
+  build: scripts/build.sh
+
+dependencies:
+  - pack: fetch
+    artifact: kernel_src
+    as: kernel_src
+
+artifacts:
+  - path: kernel
+    copy_dir: true
+    image_name_var: arch
+
+skip:
+  check_paths:
+    - kernel/Image
+    - kernel/zImage

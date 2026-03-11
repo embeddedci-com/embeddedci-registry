@@ -1,0 +1,26 @@
+type: image-sdcard
+scripts:
+  build: scripts/build.sh
+
+default_vars: {}
+
+dependencies:
+  - pack: boot/bootfat
+    artifact: bootfat.img
+    as: bootfat.img
+  - pack: app/rootfs-image
+    artifact: rootfs.ext4
+    as: rootfs.ext4
+
+artifacts:
+  - path: sdcard.img
+    path_var: sdcard_img_name
+
+skip:
+  check_paths:
+    - sdcard.img
+
+config:
+  sdcard_img_name: "{{sdcard_img_name}}"
+  bootfat_img: "{{build_root}}/bootfat.img"
+  rootfs_img: "{{build_root}}/rootfs.ext4"

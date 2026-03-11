@@ -1,0 +1,26 @@
+type: board
+# board architecture
+platform: am335x
+arch: arm
+cross_compile: arm-linux-gnueabihf-
+boot_mode: disk
+# root filesystem device and console settings
+rootfs_device: /dev/mmcblk0p2
+# Console settings
+console: ttyO0,115200n8
+# kernel config
+defconfig: multi_v7_defconfig
+dtbs: 
+  - am335x-boneblack.dtb
+kernel_config:
+  - enable:CONFIG_DEVTMPFS
+  - enable:CONFIG_DEVTMPFS_MOUNT
+
+# u-boot config
+uboot_defconfig: am335x_evm_defconfig
+enable_distro_boot: false
+enable_bootstd: false
+
+# toolchain settings
+cc: arm-linux-musleabihf-gcc
+busybox_static: false

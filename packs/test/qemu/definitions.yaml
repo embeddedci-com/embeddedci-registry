@@ -1,0 +1,31 @@
+type: test
+scripts:
+  run: scripts/run.sh
+
+test_config:
+  timeout_sec: 30
+  cpu: cortex-a53
+  memory: 1024
+  boot_success_pattern: "Kernel: Linux"
+  env_mapping:
+    UBOOT_BIN: uboot_bin
+    BOOTFAT_IMG: bootfat_img
+    ROOTFS_IMG: rootfs_ext4
+
+default_vars: {}
+
+dependencies:
+  - name: uboot_bin
+    pack: boot/uboot
+    artifact: u-boot.bin
+    as: ""
+  - name: bootfat_img
+    pack: boot/bootfat
+    artifact: bootfat.img
+    as: ""
+  - name: rootfs_ext4
+    pack: app/rootfs-image
+    artifact: rootfs.ext4
+    as: ""
+
+artifacts: []

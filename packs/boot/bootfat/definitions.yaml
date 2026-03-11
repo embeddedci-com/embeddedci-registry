@@ -1,0 +1,24 @@
+type: package
+scripts:
+  build: scripts/build.sh
+
+dependencies:
+  - pack: base/kernel-linux
+    artifact: kernel
+    as: kernel
+    copy_source_dir: true
+  - pack: initramfs/busybox
+    artifact: initramfs.cpio.gz
+    as: initramfs.cpio.gz
+    optional: true
+
+artifacts:
+  - path: bootfat.img
+
+skip:
+  check_paths:
+    - bootfat.img
+
+config:
+  kernel_image: "{{build_root}}/kernel/{{arch_image_name}}"
+  initrd: "{{build_root}}/initramfs.cpio.gz"

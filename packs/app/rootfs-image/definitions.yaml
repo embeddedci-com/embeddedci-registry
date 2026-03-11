@@ -1,0 +1,42 @@
+type: rootfs-image
+scripts:
+  build: scripts/build.sh
+
+default_vars:
+  IMG: "rootfs.ext4"
+  BUSYBOX_REF: "1_36_1"
+  rootfs_user: ""           # empty = no non-root user; set e.g. embeddedci to create one
+  rootfs_password: ""      # password for non-root user (used only if rootfs_user set)
+  rootfs_root_password: ""  # empty = root locked; set to enable root login
+
+dependencies:
+  - pack: fetch
+    artifact: busybox_src
+    as: busybox_src
+  - name: app_bin
+    pack: app/build
+    artifact: "out/app-build/{{artifact}}"
+    as: app_bin
+
+artifacts:
+  - path: rootfs.ext4
+    path_var: img
+
+skip:
+  check_paths:
+    - rootfs.ext4
+
+config:
+  artifact: "{{artifact}}"
+  app_dst: "{{app_dst}}"
+  img: "{{img}}"
+  size_mb: "{{size_mb}}"
+  hostname: "{{hostname}}"
+  console_login: "{{console_login}}"
+  busybox_ref: "{{busybox_ref}}"
+  rootfs_user: "{{rootfs_user}}"
+  rootfs_password: "{{rootfs_password}}"
+  rootfs_root_password: "{{rootfs_root_password}}"
+  rootdir: "{{build_root}}/rootfs"
+  app_bin: "{{build_root}}/app_bin"
+  busybox_src: "{{build_root}}/busybox_src"
