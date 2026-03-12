@@ -21,10 +21,7 @@ dependencies:
 
 artifacts:
   - path: kernel
-    copy_dir: true
-    image_name_var: arch
 
 skip:
   check_paths:
-    - kernel/Image
-    - kernel/zImage
+    - kernel
