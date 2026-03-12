@@ -9,6 +9,7 @@ init:
   rdinit: /init
 
 default_vars:
+  busybox_repo: https://github.com/embeddedci-com/busybox-mirror
   ref: "1_36_1"
 
 scripts:
@@ -16,7 +17,8 @@ scripts:
 
 dependencies:
   - pack: fetch
-    artifact: busybox_src
+    dest: busybox_src
+    src: "{{busybox_repo}}"
     as: busybox_src
 
 artifacts:

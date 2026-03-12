@@ -5,17 +5,19 @@ scripts:
 default_vars:
   IMG: "rootfs.ext4"
   BUSYBOX_REF: "1_36_1"
+  busybox_repo: https://github.com/embeddedci-com/busybox-mirror
   rootfs_user: ""           # empty = no non-root user; set e.g. embeddedci to create one
   rootfs_password: ""      # password for non-root user (used only if rootfs_user set)
   rootfs_root_password: ""  # empty = root locked; set to enable root login
 
 dependencies:
   - pack: fetch
-    artifact: busybox_src
+    dest: busybox_src
+    src: "{{busybox_repo}}"
     as: busybox_src
   - name: app_bin
     pack: app/build
-    artifact: "out/app-build/{{artifact}}"
+    dest: "out/app-build/{{artifact}}"
     as: app_bin
 
 artifacts:

@@ -1,6 +1,4 @@
 type: kernel
-repo: https://github.com/torvalds/linux.git
-ref: v6.6
 config:
   defconfig: defconfig
   ref: "{{ref}}"
@@ -9,6 +7,7 @@ config:
   kernel_image: "{{build_root}}/kernel/{{arch_image_name}}"
 
 default_vars:
+  repo: https://github.com/torvalds/linux.git
   ref: v6.6
   arch: arm64
 
@@ -17,8 +16,8 @@ scripts:
 
 dependencies:
   - pack: fetch
-    artifact: kernel_src
-    as: kernel_src
+    dest: kernel_src
+    src: "{{repo}}"
 
 artifacts:
   - path: kernel

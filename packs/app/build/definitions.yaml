@@ -4,7 +4,10 @@ scripts:
 
 default_vars: {}
 
-dependencies: []
+dependencies:
+  - pack: fetch
+    dest: "{{artifact}}"
+    src: "{{src}}"
 
 artifacts:
   - path_var: artifact

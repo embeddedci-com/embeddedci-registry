@@ -17,15 +17,15 @@ default_vars: {}
 dependencies:
   - name: uboot_bin
     pack: boot/uboot
-    artifact: u-boot.bin
+    dest: u-boot.bin
     as: ""
   - name: bootfat_img
     pack: boot/bootfat
-    artifact: bootfat.img
+    dest: bootfat.img
     as: ""
   - name: rootfs_ext4
     pack: app/rootfs-image
-    artifact: rootfs.ext4
+    dest: rootfs.ext4
     as: ""
 
 artifacts: []

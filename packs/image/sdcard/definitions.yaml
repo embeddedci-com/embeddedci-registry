@@ -6,10 +6,10 @@ default_vars: {}
 
 dependencies:
   - pack: boot/bootfat
-    artifact: bootfat.img
+    dest: bootfat.img
     as: bootfat.img
   - pack: app/rootfs-image
-    artifact: rootfs.ext4
+    dest: rootfs.ext4
     as: rootfs.ext4
 
 artifacts:

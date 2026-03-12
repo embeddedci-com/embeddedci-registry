@@ -1,7 +1,4 @@
 type: boot
-repo: https://github.com/u-boot/u-boot.git
-ref: v2026.01
-arch: arm64
 config:
   defconfig: qemu_arm64_defconfig
   ref: "{{ref}}"
@@ -9,6 +6,7 @@ config:
   uboot_src: "{{build_root}}/uboot_src"
 
 default_vars:
+  repo: https://github.com/u-boot/u-boot.git
   ref: v2026.01
   arch: arm64
 
@@ -17,7 +15,8 @@ scripts:
 
 dependencies:
   - pack: fetch
-    artifact: uboot_src
+    dest: uboot_src
+    src: "{{repo}}"
     as: uboot_src
 
 artifacts:
