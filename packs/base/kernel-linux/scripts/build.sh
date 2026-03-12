@@ -114,10 +114,12 @@ make "${DEFCONFIG}"
 
 # Apply board-specific config directives from YAML
 if [[ -n "${BOARD_KERNEL_KCONFIG:-}" ]]; then
-  while IFS= read -r d; do
+  # Avoid bash process substitution (</dev/fd/63>) for compatibility with environments
+  # where /dev/fd is not available (e.g. restricted firecracker/jailer setups).
+  split_csv "${BOARD_KERNEL_KCONFIG}" | while IFS= read -r d; do
     echo "KCONFIG: ${d}"
     apply_kconfig_directive "${d}"
-  done < <(split_csv "${BOARD_KERNEL_KCONFIG}")
+  done
 fi
 
 make olddefconfig
@@ -137,7 +139,8 @@ if [[ -n "${DTBS_CSV}" ]]; then
   # Validate + stage requested dtbs
   mkdir -p "${OUTDIR}/dtbs"
 
-  while IFS= read -r dtb; do
+  # Avoid bash process substitution here as well to not depend on /dev/fd.
+  split_csv "${DTBS_CSV}" | while IFS= read -r dtb; do
     # DTBs may live in subdirs under arch/${ARCH}/boot/dts
     p="$(find "arch/${ARCH}/boot/dts" -name "${dtb}" -print -quit || true)"
     if [[ -z "${p}" ]]; then
@@ -145,7 +148,7 @@ if [[ -n "${DTBS_CSV}" ]]; then
       exit 1
     fi
     cp "${p}" "${OUTDIR}/dtbs/${dtb}"
-  done < <(split_csv "${DTBS_CSV}")
+  done
 fi
 
 # Stage kernel image artifact in a predictable place

@@ -92,8 +92,9 @@ mcopy -i "${IMG}" -v "${KERNEL_IMAGE}" "::/${KERNEL_FILENAME}"
 if [[ -n "${BOARD_DTBS:-}" ]]; then
   DTB_DIR="./kernel/dtbs"
 
-  # Split comma-separated list, trim whitespace, and process
-  while IFS= read -r dtb; do
+  # Split comma-separated list, trim whitespace, and process.
+  # Avoid bash process substitution (</dev/fd/...) for environments without /dev/fd.
+  echo "${BOARD_DTBS}" | tr ',' '\n' | while IFS= read -r dtb; do
     dtb="$(echo "${dtb}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
     [[ -n "${dtb}" ]] || continue
 
@@ -106,7 +107,7 @@ if [[ -n "${BOARD_DTBS:-}" ]]; then
 
     # Copy into FAT root with same filename
     mcopy -i "${IMG}" -v "${src}" "::/${dtb}"
-  done < <(echo "${BOARD_DTBS}" | tr ',' '\n')
+  done
 fi
 
 # Build extlinux.conf
