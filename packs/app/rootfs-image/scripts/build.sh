@@ -68,8 +68,16 @@ need "${BOARD_CC}"
 TARGET_TRIPLE="$("${BOARD_CC}" -dumpmachine)"
 SYSROOT="$("${BOARD_CC}" -print-sysroot 2>/dev/null || true)"
 
+# Use target strip so host strip isn't used on the cross-built binary (avoids "Unable to recognise the format")
+BOARD_STRIP="${BOARD_CC%gcc}strip"
+if ! command -v "${BOARD_STRIP}" >/dev/null 2>&1; then
+  BOARD_STRIP="${BOARD_CC%-gcc}-strip"
+fi
+need "${BOARD_STRIP}"
+
 echo "[*] Board toolchain:"
 echo "    BOARD_CC=${BOARD_CC}"
+echo "    BOARD_STRIP=${BOARD_STRIP}"
 echo "    TARGET_TRIPLE=${TARGET_TRIPLE}"
 echo "    SYSROOT=${SYSROOT:-<none>}"
 echo "    BusyBox static=${BUSYBOX_STATIC}"
@@ -101,8 +109,8 @@ else
   sed -i 's/^CONFIG_STATIC=y/# CONFIG_STATIC is not set/' .config || true
 fi
 
-make -j"$(nproc)" CC="${BOARD_CC}"
-make CC="${BOARD_CC}" CONFIG_PREFIX="${ROOTDIR}" install
+make -j"$(nproc)" CC="${BOARD_CC}" STRIP="${BOARD_STRIP}"
+make CC="${BOARD_CC}" STRIP="${BOARD_STRIP}" CONFIG_PREFIX="${ROOTDIR}" install
 popd >/dev/null
 
 echo "[*] Creating minimal filesystem layout..."
