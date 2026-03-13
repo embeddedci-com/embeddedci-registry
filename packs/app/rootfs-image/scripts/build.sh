@@ -186,6 +186,10 @@ EOF
 root:${ROOT_HASH}:19000:0:99999:7:::
 ${ROOTFS_USER}:${ROOTFS_USER_HASH}:19000:0:99999:7:::
 EOF
+  cat > "${ROOTDIR}/etc/gshadow" <<EOF
+root::::
+${ROOTFS_USER}::::
+EOF
 else
   cat > "${ROOTDIR}/etc/passwd" <<EOF
 root:x:0:0:root:/root:/bin/sh
@@ -195,6 +199,9 @@ root:x:0:
 EOF
   cat > "${ROOTDIR}/etc/shadow" <<EOF
 root:${ROOT_HASH}:19000:0:99999:7:::
+EOF
+  cat > "${ROOTDIR}/etc/gshadow" <<EOF
+root::::
 EOF
 fi
 
