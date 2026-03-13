@@ -13,7 +13,6 @@ dependencies:
   - pack: fetch
     dest: busybox_src
     src: "{{busybox_repo}}"
-    as: busybox_src
   - name: app_bin
     pack: app/build
     dest: "out/app-build/{{artifact}}"

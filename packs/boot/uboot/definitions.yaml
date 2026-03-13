@@ -17,7 +17,6 @@ dependencies:
   - pack: fetch
     dest: uboot_src
     src: "{{repo}}"
-    as: uboot_src
 
 artifacts:
   - path: uboot/u-boot.bin

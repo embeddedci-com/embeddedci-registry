@@ -11,7 +11,12 @@ set -e
 : "${SRC:?SRC required}"
 : "${ARTIFACT:?ARTIFACT required}"
 
-APP_SRC="${PROJECT_ROOT}/${SRC}"
+# SRC is either a path relative to PROJECT_ROOT (local) or an absolute path under BUILD_ROOT (git fetch).
+if [[ "${SRC}" == /* ]]; then
+  APP_SRC="${SRC}"
+else
+  APP_SRC="${PROJECT_ROOT}/${SRC}"
+fi
 if [[ ! -d "${APP_SRC}" ]]; then
   echo "App source not found: ${APP_SRC}"
   exit 1
