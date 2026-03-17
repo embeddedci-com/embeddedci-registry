@@ -1,0 +1,37 @@
+type: rootfs
+
+config:
+  source: "{{source}}"
+  defconfig: "{{defconfig}}"
+  buildroot_config_dir: "{{project_root}}/{{source}}"
+  buildroot_tree: "{{build_root}}/buildroot_src"
+  outputs: "{{outputs}}"
+  overlays: "{{overlays}}"
+  app_artifacts: "{{app_artifacts}}"
+  app_bin: "{{build_root}}/app_bin"
+
+default_vars:
+  source: ""
+  outputs: "ext4"
+  hostname: "embedded-ci"
+  console_login: "disabled"
+  buildroot_repo: https://github.com/buildroot/buildroot.git
+  buildroot_ref: "2026.02"
+
+scripts:
+  build: scripts/build.sh
+
+dependencies:
+  - pack: fetch
+    dest: buildroot_src
+    src: "{{buildroot_repo}}?ref={{buildroot_ref}}"
+  - pack: apps/build
+    dest: "out/app-build/{{artifact}}"
+    as: app_bin
+    optional: true
+
+artifacts:
+  - path: rootfs.ext4
+    build_path: "buildroot_out/images/rootfs.ext4"
+  - path: rootfs.cpio.gz
+    build_path: "buildroot_out/images/rootfs.cpio.gz"
