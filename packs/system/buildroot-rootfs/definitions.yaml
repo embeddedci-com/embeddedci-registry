@@ -38,5 +38,3 @@ dependencies:
 artifacts:
   - path: rootfs.ext4
     build_path: "buildroot_out/images/rootfs.ext4"
-  - path: rootfs.cpio.gz
-    build_path: "buildroot_out/images/rootfs.cpio.gz"
