@@ -3,7 +3,8 @@ type: rootfs
 config:
   source: "{{source}}"
   defconfig: "{{defconfig}}"
-  buildroot_config_dir: "{{project_root}}/{{source}}"
+  # After fetch+copy: BR2_EXTERNAL at buildroot_external (git URL or project-relative path)
+  buildroot_config_dir: "{{build_root}}/buildroot_external"
   buildroot_tree: "{{build_root}}/buildroot_src"
   outputs: "{{outputs}}"
   overlays: "{{overlays}}"
@@ -25,6 +26,10 @@ dependencies:
   - pack: fetch
     dest: buildroot_src
     src: "{{buildroot_repo}}?ref={{buildroot_ref}}"
+  - pack: fetch
+    dest: buildroot_external
+    src: "{{source}}"
+    as: buildroot_external
   - pack: apps/build
     dest: "out/app-build/{{artifact}}"
     as: app_bin

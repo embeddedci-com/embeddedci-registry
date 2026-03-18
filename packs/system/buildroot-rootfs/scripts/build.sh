@@ -101,10 +101,19 @@ outputs_list() {
 : "${SOURCE:?SOURCE required (project-relative path to Buildroot config)}"
 : "${DEFCONFIG:?DEFCONFIG required (e.g. beaglebone_defconfig)}"
 
-# Derive paths when env was not expanded (e.g. agent sends raw env to server)
+# Derive paths: fetch copies BR2_EXTERNAL to buildroot_external; unexpanded env or bad paths fall back
 case "$BUILDROOT_CONFIG_DIR" in
-  ""|*"{{"*) BUILDROOT_CONFIG_DIR="$PROJECT_ROOT/$SOURCE" ;;
+  ""|*"{{"*)
+    if [[ -d "$BUILD_ROOT/buildroot_external" ]]; then
+      BUILDROOT_CONFIG_DIR="$BUILD_ROOT/buildroot_external"
+    else
+      BUILDROOT_CONFIG_DIR="$PROJECT_ROOT/$SOURCE"
+    fi
+    ;;
 esac
+if [[ ! -d "$BUILDROOT_CONFIG_DIR" ]] && [[ -d "$BUILD_ROOT/buildroot_external" ]]; then
+  BUILDROOT_CONFIG_DIR="$BUILD_ROOT/buildroot_external"
+fi
 case "$BUILDROOT_TREE" in
   ""|*"{{"*) BUILDROOT_TREE="$BUILD_ROOT/buildroot_src" ;;
 esac
