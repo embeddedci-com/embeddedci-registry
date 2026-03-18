@@ -16,6 +16,7 @@
 #   APP_ARTIFACTS   JSON array of {artifact,dst,mode} or legacy "name:dst:mode"
 #   USERS           JSON array of {name,password} or legacy "name:password"
 #   APP_BIN         path to app binary (when dependency apps/build is used)
+#   BUILD_TMPDIR    temp dir for compiler/toolchain (default: BUILD_ROOT/tmp); avoids small /tmp tmpfs
 #
 # O= output dir (see BR_OUT_* below). Artifacts end up under BUILD_ROOT/buildroot_out/images/ for applyOutputs.
 
@@ -98,6 +99,14 @@ outputs_list() {
 # ===== Config =====
 : "${BUILD_ROOT:?BUILD_ROOT required}"
 : "${PROJECT_ROOT:?PROJECT_ROOT required}"
+
+# Use build volume for temp files (GCC .s, etc.) so /tmp tmpfs or small root is not exhausted.
+BUILD_TMPDIR="${BUILD_TMPDIR:-${BUILD_ROOT}/tmp}"
+mkdir -p "$BUILD_TMPDIR"
+export TMPDIR="$BUILD_TMPDIR"
+export TMP="$BUILD_TMPDIR"
+export TEMP="$BUILD_TMPDIR"
+echo "[*] TMPDIR=$TMPDIR (compiler/temp files on build volume)"
 : "${SOURCE:?SOURCE required (project-relative path to Buildroot config)}"
 : "${DEFCONFIG:?DEFCONFIG required (e.g. beaglebone_defconfig)}"
 
