@@ -17,7 +17,7 @@
 #   USERS           JSON array of {name,password} or legacy "name:password"
 #   APP_BIN         path to app binary (when dependency apps/build is used)
 #
-# Output artifacts: Buildroot writes to BUILD_ROOT/buildroot_out/images/ (O= build, source read-only).
+# O= output dir (see BR_OUT_* below). Artifacts end up under BUILD_ROOT/buildroot_out/images/ for applyOutputs.
 
 set -euo pipefail
 
@@ -142,9 +142,23 @@ fi
 
 need make
 
-# Out-of-tree build: all output under BUILD_ROOT/buildroot_out (source tree stays read-only)
-BR_OUT="$BUILD_ROOT/buildroot_out"
-mkdir -p "$BR_OUT"
+# Out-of-tree build (O=):
+# - Local / non-Docker: default O=BUILD_ROOT/buildroot_out (avoids filling tmpfs /tmp; full Buildroot is GB-scale).
+# - Docker (/.dockerenv): default O=/tmp/... because bind mounts often break chmod on extracts (e.g. macOS).
+# Override: BR_OUT_USE_TMP=1 (always /tmp), BR_OUT_USE_MOUNT=1 (always BUILD_ROOT/buildroot_out).
+BR_OUT_STAGING="$BUILD_ROOT/buildroot_out"
+mkdir -p "$BR_OUT_STAGING/images"
+BR_OUT_USE_TMP="${BR_OUT_USE_TMP:-}"
+BR_OUT_USE_MOUNT="${BR_OUT_USE_MOUNT:-}"
+if [[ "$BR_OUT_USE_MOUNT" == "1" ]]; then
+  BR_OUT="$BR_OUT_STAGING"
+elif [[ "$BR_OUT_USE_TMP" == "1" ]] || [[ -f /.dockerenv ]]; then
+  BR_OUT=$(mktemp -d /tmp/embeddedci-br-out.XXXXXX)
+  echo "[*] Buildroot O= $BR_OUT (tmp; copy to $BR_OUT_STAGING/images after build)"
+else
+  BR_OUT="$BR_OUT_STAGING"
+  echo "[*] Buildroot O= $BR_OUT (local disk under BUILD_ROOT)"
+fi
 
 # Optional post-build script for app artifact(s)
 POST_SCRIPT=""
@@ -210,5 +224,9 @@ fi
 make "${MAKE_ARGS[@]}"
 popd >/dev/null
 
-# Artifacts are in $BUILD_ROOT/buildroot_out/images (applyOutputs reads from build_path)
-echo "[*] Done: outputs in $BR_OUT/images"
+if [[ "$BR_OUT" != "$BR_OUT_STAGING" ]] && [[ -d "$BR_OUT/images" ]]; then
+  cp -a "$BR_OUT/images/"* "$BR_OUT_STAGING/images/" 2>/dev/null || true
+  rm -rf "$BR_OUT"
+  echo "[*] Staged images to $BR_OUT_STAGING/images (for artifact export)"
+fi
+echo "[*] Done: outputs in $BR_OUT_STAGING/images"
