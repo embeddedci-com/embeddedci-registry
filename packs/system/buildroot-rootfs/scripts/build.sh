@@ -179,12 +179,16 @@ if [[ -n "$APP_BIN" ]] && [[ -f "$APP_BIN" ]]; then
 fi
 
 # Collect overlay dirs (absolute paths)
+# Avoid bash process substitution < <(...) — needs /dev/fd (unavailable in firecracker/jailer).
 OVERLAY_DIRS=()
-while IFS= read -r ov; do
+_overlay_tmp="${BUILD_ROOT}/.buildroot_overlays_list.$$"
+overlays_list > "$_overlay_tmp" || true
+while IFS= read -r ov || [[ -n "$ov" ]]; do
   [[ -z "$ov" ]] && continue
   abs="$BUILDROOT_CONFIG_DIR/$ov"
   [[ -d "$abs" ]] && OVERLAY_DIRS+=("$abs")
-done < <(overlays_list)
+done < "$_overlay_tmp"
+rm -f "$_overlay_tmp"
 
 # Run Buildroot with O= (out-of-tree): source tree stays read-only, all output in BR_OUT
 MAKE_ARGS=(BR2_EXTERNAL="$BUILDROOT_CONFIG_DIR" O="$BR_OUT")
