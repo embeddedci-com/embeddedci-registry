@@ -96,6 +96,33 @@ outputs_list() {
   tr ',' '\n' <<< "$v"
 }
 
+enable_rootfs_output() {
+  local config_file="$1"
+  local out="$2"
+  case "$out" in
+    ext4)
+      # Buildroot uses EXT2 backend with EXT4 variant toggle.
+      grep -q '^BR2_TARGET_ROOTFS_EXT2=y' "$config_file" || echo 'BR2_TARGET_ROOTFS_EXT2=y' >> "$config_file"
+      if grep -q '^# BR2_TARGET_ROOTFS_EXT2_4 is not set' "$config_file"; then
+        sed -i 's/^# BR2_TARGET_ROOTFS_EXT2_4 is not set/BR2_TARGET_ROOTFS_EXT2_4=y/' "$config_file"
+      elif ! grep -q '^BR2_TARGET_ROOTFS_EXT2_4=y' "$config_file"; then
+        echo 'BR2_TARGET_ROOTFS_EXT2_4=y' >> "$config_file"
+      fi
+      ;;
+    tar)
+      grep -q '^BR2_TARGET_ROOTFS_TAR=y' "$config_file" || echo 'BR2_TARGET_ROOTFS_TAR=y' >> "$config_file"
+      ;;
+    cpio.gz)
+      grep -q '^BR2_TARGET_ROOTFS_CPIO=y' "$config_file" || echo 'BR2_TARGET_ROOTFS_CPIO=y' >> "$config_file"
+      if grep -q '^# BR2_TARGET_ROOTFS_CPIO_GZIP is not set' "$config_file"; then
+        sed -i 's/^# BR2_TARGET_ROOTFS_CPIO_GZIP is not set/BR2_TARGET_ROOTFS_CPIO_GZIP=y/' "$config_file"
+      elif ! grep -q '^BR2_TARGET_ROOTFS_CPIO_GZIP=y' "$config_file"; then
+        echo 'BR2_TARGET_ROOTFS_CPIO_GZIP=y' >> "$config_file"
+      fi
+      ;;
+  esac
+}
+
 # ===== Config =====
 : "${BUILD_ROOT:?BUILD_ROOT required}"
 : "${PROJECT_ROOT:?PROJECT_ROOT required}"
@@ -232,6 +259,13 @@ if [[ -f "$CONFIG_FILE" ]]; then
       echo "BR2_ROOTFS_POST_SCRIPT=\"$POST_SCRIPT\"" >> "$CONFIG_FILE"
     fi
   fi
+  _outputs_tmp="${BUILD_ROOT}/.buildroot_outputs_list.$$"
+  outputs_list > "$_outputs_tmp" || true
+  while IFS= read -r out || [[ -n "$out" ]]; do
+    [[ -z "$out" ]] && continue
+    enable_rootfs_output "$CONFIG_FILE" "$out"
+  done < "$_outputs_tmp"
+  rm -f "$_outputs_tmp"
   make "${MAKE_ARGS[@]}" olddefconfig
 fi
 make "${MAKE_ARGS[@]}"
