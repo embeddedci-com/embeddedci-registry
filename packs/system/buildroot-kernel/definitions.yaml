@@ -1,0 +1,32 @@
+type: kernel
+
+config:
+  source: "{{source}}"
+  buildroot_defconfig: "{{buildroot_defconfig}}"
+  ref: "{{ref}}"
+  arch: "{{arch}}"
+  buildroot_config_dir: "{{build_root}}/buildroot_external"
+  buildroot_tree: "{{build_root}}/buildroot_src"
+
+default_vars:
+  source: ""
+  buildroot_defconfig: arm_defconfig
+  ref: v6.12
+  arch: arm64
+  buildroot_repo: https://github.com/buildroot/buildroot.git
+  buildroot_ref: "2026.02"
+
+scripts:
+  build: scripts/build.sh
+
+dependencies:
+  - pack: fetch
+    dest: buildroot_src
+    src: "{{buildroot_repo}}?ref={{buildroot_ref}}"
+  - pack: fetch
+    dest: buildroot_external
+    src: "{{source}}"
+    as: buildroot_external
+
+artifacts:
+  - path: kernel

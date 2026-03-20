@@ -6,7 +6,7 @@
 #
 # Optional env:
 #   BOARD_CROSS_COMPILE
-#   BOARD_DEFCONFIG
+#   BOARD_DEFCONFIG             (boards: defconfig; Linux defconfig basename, see normalization below)
 #   BOARD_IMAGE_TARGET
 #   BOARD_DTBS                 (comma-separated list: am335x-boneblack.dtb,foo.dtb)
 #   BOARD_KERNEL_KCONFIG        (comma-separated list of directives, e.g.
@@ -28,8 +28,12 @@ set -euo pipefail
 export ARCH="${BOARD_ARCH}"
 export CROSS_COMPILE="${BOARD_CROSS_COMPILE}"
 
-# Defaults based on ARCH
+# Linux make target is e.g. multi_v7_defconfig; board defconfig uses basename only (matches BR2_LINUX_KERNEL_DEFCONFIG).
+# Normalize: keep "defconfig" as-is; if value lacks _defconfig, append it for make.
 DEFCONFIG="${BOARD_DEFCONFIG:-defconfig}"
+if [[ "${DEFCONFIG}" != defconfig && "${DEFCONFIG}" != *_defconfig ]]; then
+  DEFCONFIG="${DEFCONFIG}_defconfig"
+fi
 
 IMAGE_TARGET="${BOARD_IMAGE_TARGET:-}"
 if [[ -z "${IMAGE_TARGET}" ]]; then

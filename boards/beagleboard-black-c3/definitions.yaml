@@ -8,8 +8,8 @@ boot_mode: disk
 rootfs_device: /dev/mmcblk0p2
 # Console settings
 console: ttyO0,115200n8
-# kernel config
-defconfig: multi_v7_defconfig
+# Linux kernel defconfig basename (BR2_LINUX_KERNEL_DEFCONFIG / make target); no _defconfig suffix
+defconfig: multi_v7
 dtbs: 
   - am335x-boneblack.dtb
 kernel_config:
