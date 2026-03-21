@@ -96,6 +96,7 @@ outputs_list() {
   tr ',' '\n' <<< "$v"
 }
 
+# Apply OUTPUTS to Buildroot O=/.config (defconfig alone may only enable tar, etc.).
 enable_rootfs_output() {
   local config_file="$1"
   local out="$2"
@@ -177,6 +178,7 @@ if [[ ! -f "$BUILDROOT_TREE/Makefile" ]]; then
 fi
 
 need make
+need jq
 
 # Out-of-tree build (O=):
 # - Local / non-Docker: default O=BUILD_ROOT/buildroot_out (avoids filling tmpfs /tmp; full Buildroot is GB-scale).
@@ -275,5 +277,9 @@ if [[ "$BR_OUT" != "$BR_OUT_STAGING" ]] && [[ -d "$BR_OUT/images" ]]; then
   cp -a "$BR_OUT/images/"* "$BR_OUT_STAGING/images/" 2>/dev/null || true
   rm -rf "$BR_OUT"
   echo "[*] Staged images to $BR_OUT_STAGING/images (for artifact export)"
+fi
+# Buildroot often names ext4 images rootfs.ext2 (EXT2 backend + EXT4 variant).
+if [[ -f "$BR_OUT_STAGING/images/rootfs.ext2" ]] && [[ ! -f "$BR_OUT_STAGING/images/rootfs.ext4" ]]; then
+  cp -a "$BR_OUT_STAGING/images/rootfs.ext2" "$BR_OUT_STAGING/images/rootfs.ext4"
 fi
 echo "[*] Done: outputs in $BR_OUT_STAGING/images"
