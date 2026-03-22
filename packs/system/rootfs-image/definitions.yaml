@@ -14,9 +14,8 @@ dependencies:
     dest: busybox_src
     src: "{{busybox_repo}}"
   - name: app_bin
-    pack: app/build
+    pack: apps/build
     dest: "out/app-build/{{artifact}}"
-    as: app_bin
 
 artifacts:
   - path: rootfs.ext4
@@ -37,5 +36,5 @@ config:
   rootfs_password: "{{rootfs_password}}"
   rootfs_root_password: "{{rootfs_root_password}}"
   rootdir: "{{build_root}}/rootfs"
-  app_bin: "{{build_root}}/app_bin"
+  app_bin: "{{build_root}}/out/app-build/{{artifact}}"
   busybox_src: "{{build_root}}/busybox_src"
