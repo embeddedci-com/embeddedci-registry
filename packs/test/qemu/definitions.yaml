@@ -18,14 +18,11 @@ dependencies:
   - name: uboot_bin
     pack: boot/uboot
     dest: u-boot.bin
-    as: ""
   - name: bootfat_img
     pack: boot/bootfat
     dest: bootfat.img
-    as: ""
   - name: rootfs_ext4
     pack: app/rootfs-image
     dest: rootfs.ext4
-    as: ""
 
 artifacts: []

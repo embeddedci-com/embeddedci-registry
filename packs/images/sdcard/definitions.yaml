@@ -7,10 +7,8 @@ default_vars: {}
 dependencies:
   - pack: boot/bootfat
     dest: bootfat.img
-    as: bootfat.img
   - pack: app/rootfs-image
     dest: rootfs.ext4
-    as: rootfs.ext4
 
 artifacts:
   - path: sdcard.img

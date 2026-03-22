@@ -29,10 +29,8 @@ dependencies:
   - pack: fetch
     dest: buildroot_external
     src: "{{source}}"
-    as: buildroot_external
   - pack: apps/build
     dest: "out/app-build/{{artifact}}"
-    as: app_bin
     optional: true
 
 artifacts:

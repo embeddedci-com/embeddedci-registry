@@ -26,7 +26,6 @@ dependencies:
   - pack: fetch
     dest: buildroot_external
     src: "{{source}}"
-    as: buildroot_external
 
 artifacts:
   - path: kernel

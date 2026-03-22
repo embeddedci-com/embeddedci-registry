@@ -5,11 +5,9 @@ scripts:
 dependencies:
   - pack: base/kernel-linux
     dest: kernel
-    as: kernel
     copy_source_dir: true
   - pack: initramfs/busybox
     dest: initramfs.cpio.gz
-    as: initramfs.cpio.gz
     optional: true
 
 artifacts:

@@ -19,7 +19,6 @@ dependencies:
   - pack: fetch
     dest: busybox_src
     src: "{{busybox_repo}}"
-    as: busybox_src
 
 artifacts:
   - path: initramfs.cpio.gz
