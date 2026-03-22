@@ -1,0 +1,24 @@
+type: yocto
+
+# Same pattern as buildroot-kernel: `source` is the git URL (git+https://...//subpath?ref=...); engine fetch clones it.
+config:
+  source: "{{source}}"
+  kas_config_src: "{{build_root}}/kas_config_src"
+  kas_file: kas.yml
+  yocto_staging_dir: yocto-staging
+  yocto_sstate_dir: yocto/sstate
+  yocto_dl_dir: yocto/downloads
+
+default_vars:
+  source: ""
+
+scripts:
+  build: scripts/build.sh
+
+dependencies:
+  - pack: fetch
+    dest: kas_config_src
+    src: "{{source}}"
+
+artifacts:
+  - path: yocto-staging

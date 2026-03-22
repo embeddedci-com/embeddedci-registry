@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+# Yocto image build via Kas (https://kas.readthedocs.io/).
+#
+# Kas project checkout: engine `fetch` (definitions dependencies) clones `source` into
+# BUILD_ROOT/kas_config_src; env KAS_CONFIG_SRC points at that tree after URL→path replacement.
+#
+# Configuration (merged into env by the engine):
+#   SOURCE            Git URL from pack config (may be rewritten to KAS_CONFIG_SRC path when it matched fetch)
+#   KAS_CONFIG_SRC    Directory containing kas.yml (from definitions config template)
+#   KAS_FILE          Kas manifest filename (default kas.yml)
+#   ARTIFACTS         JSON array of paths relative to tmp/deploy (parsed with jq)
+#
+# Paths:
+#   BUILD_ROOT, YOCTO_STAGING_DIR, YOCTO_SSTATE_DIR, YOCTO_DL_DIR — see definitions.yaml
+#
+# Required on PATH: cp, dirname, find, head, jq, mkdir, rm, python3 (+ pip), git, kas (kas via pip if missing).
+
+set -euo pipefail
+
+need() {
+  local x
+  for x in "$@"; do
+    command -v "$x" >/dev/null 2>&1 || {
+      echo "yocto-image: required command not found: ${x}" >&2
+      exit 1
+    }
+  done
+}
+
+BUILD_ROOT="${BUILD_ROOT:-/build}"
+BUILD_ROOT="${BUILD_ROOT%/}"
+
+# Host tools this script uses; kas/bitbake will also invoke git.
+need cp dirname find head jq mkdir rm python3 git
+python3 -m pip --version >/dev/null 2>&1 || {
+  echo "yocto-image: need python3 with pip (e.g. apt install python3-pip)" >&2
+  exit 1
+}
+
+yocto_resolve_path() {
+  local p="${1:-}"
+  [[ -z "${p}" ]] && return 0
+  if [[ "${p}" = /* ]]; then
+    echo "${p}"
+  else
+    p="${p#/}"
+    echo "${BUILD_ROOT}/${p}"
+  fi
+}
+
+YOCTO_STAGING_DIR="${YOCTO_STAGING_DIR:-yocto-staging}"
+YOCTO_STAGING_DIR="${YOCTO_STAGING_DIR#/}"
+
+KAS_WORK="${KAS_CONFIG_SRC:-}"
+if [[ -z "${KAS_WORK}" || ! -d "${KAS_WORK}" ]]; then
+  echo "yocto-image: KAS_CONFIG_SRC must be set to the fetched kas config directory (engine fetch + prepareInputs)" >&2
+  exit 1
+fi
+
+KAS_YML_NAME="${KAS_FILE:-kas.yml}"
+KAS_YML="${KAS_WORK}/${KAS_YML_NAME}"
+if [[ ! -f "${KAS_YML}" ]]; then
+  echo "yocto-image: kas file not found: ${KAS_YML}" >&2
+  exit 1
+fi
+
+if ! command -v kas >/dev/null 2>&1; then
+  echo "yocto-image: installing kas (pip --user)"
+  python3 -m pip install --user --quiet kas
+fi
+export PATH="${HOME}/.local/bin:${PATH}"
+need kas
+
+SSTATE_DIR="$(yocto_resolve_path "${YOCTO_SSTATE_DIR:-yocto/sstate}")"
+DL_DIR="$(yocto_resolve_path "${YOCTO_DL_DIR:-yocto/downloads}")"
+export SSTATE_DIR DL_DIR
+mkdir -p "${SSTATE_DIR}" "${DL_DIR}"
+echo "yocto-image: KAS_WORK=${KAS_WORK} SSTATE_DIR=${SSTATE_DIR} DL_DIR=${DL_DIR}"
+
+echo "yocto-image: kas build ${KAS_YML_NAME} in ${KAS_WORK}"
+(
+  cd "${KAS_WORK}"
+  kas build "${KAS_YML_NAME}"
+)
+
+deploy_root="$(find "${BUILD_ROOT}" -type d -path '*/tmp/deploy' 2>/dev/null | head -1 || true)"
+if [[ -z "${deploy_root}" ]]; then
+  echo "yocto-image: could not find */tmp/deploy under ${BUILD_ROOT}" >&2
+  exit 1
+fi
+echo "yocto-image: deploy root ${deploy_root}"
+
+staging="${BUILD_ROOT}/${YOCTO_STAGING_DIR}"
+rm -rf "${staging}"
+mkdir -p "${staging}"
+
+if [[ -z "${ARTIFACTS:-}" ]]; then
+  echo "yocto-image: ARTIFACTS must be set (JSON array of paths under tmp/deploy)" >&2
+  exit 1
+fi
+if ! jq -e 'type == "array" and length > 0' <<<"${ARTIFACTS}" >/dev/null 2>&1; then
+  echo "yocto-image: ARTIFACTS must be a non-empty JSON array" >&2
+  exit 1
+fi
+
+while IFS= read -r rel; do
+  [[ -z "${rel}" ]] && continue
+  src="${deploy_root}/${rel}"
+  if [[ ! -e "${src}" ]]; then
+    echo "yocto-image: missing ${src} (artifact path ${rel})" >&2
+    exit 1
+  fi
+  dst="${staging}/${rel}"
+  mkdir -p "$(dirname "${dst}")"
+  cp -a "${src}" "${dst}"
+  echo "yocto-image: staged ${rel}"
+done < <(jq -r '.[]' <<< "${ARTIFACTS}")
+
+echo "yocto-image: done, staging dir ${staging}"
