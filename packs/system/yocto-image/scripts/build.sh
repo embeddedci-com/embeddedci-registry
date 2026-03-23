@@ -13,7 +13,7 @@
 # Paths:
 #   BUILD_ROOT, YOCTO_STAGING_DIR, YOCTO_SSTATE_DIR, YOCTO_DL_DIR — see definitions.yaml
 #
-# Required on PATH: cp, dirname, find, head, jq, mkdir, rm, python3 (+ pip), git, kas (kas via pip if missing).
+# Required on PATH: cp, dirname, find, head, jq, mkdir, rm, python3 (+ venv), git.
 
 set -euo pipefail
 
@@ -32,8 +32,8 @@ BUILD_ROOT="${BUILD_ROOT%/}"
 
 # Host tools this script uses; kas/bitbake will also invoke git.
 need cp dirname find head jq mkdir rm python3 git
-python3 -m pip --version >/dev/null 2>&1 || {
-  echo "yocto-image: need python3 with pip (e.g. apt install python3-pip)" >&2
+python3 -m venv -h >/dev/null 2>&1 || {
+  echo "yocto-image: need python3 venv support (e.g. apt install python3-venv)" >&2
   exit 1
 }
 
@@ -64,12 +64,17 @@ if [[ ! -f "${KAS_YML}" ]]; then
   exit 1
 fi
 
-if ! command -v kas >/dev/null 2>&1; then
-  echo "yocto-image: installing kas (pip --user)"
-  python3 -m pip install --user --quiet kas
+KAS_VENV_DIR="$(yocto_resolve_path "${YOCTO_KAS_VENV_DIR:-.venv/yocto-kas}")"
+KAS_VENV_BIN="${KAS_VENV_DIR}/bin"
+KAS_BIN="${KAS_VENV_BIN}/kas"
+
+if [[ ! -x "${KAS_BIN}" ]]; then
+  echo "yocto-image: creating kas venv at ${KAS_VENV_DIR}"
+  mkdir -p "$(dirname "${KAS_VENV_DIR}")"
+  python3 -m venv "${KAS_VENV_DIR}"
+  "${KAS_VENV_BIN}/python" -m pip install --quiet --upgrade pip
+  "${KAS_VENV_BIN}/python" -m pip install --quiet kas
 fi
-export PATH="${HOME}/.local/bin:${PATH}"
-need kas
 
 SSTATE_DIR="$(yocto_resolve_path "${YOCTO_SSTATE_DIR:-yocto/sstate}")"
 DL_DIR="$(yocto_resolve_path "${YOCTO_DL_DIR:-yocto/downloads}")"
@@ -80,7 +85,7 @@ echo "yocto-image: KAS_WORK=${KAS_WORK} SSTATE_DIR=${SSTATE_DIR} DL_DIR=${DL_DIR
 echo "yocto-image: kas build ${KAS_YML_NAME} in ${KAS_WORK}"
 (
   cd "${KAS_WORK}"
-  kas build "${KAS_YML_NAME}"
+  "${KAS_BIN}" build "${KAS_YML_NAME}"
 )
 
 deploy_root="$(find "${BUILD_ROOT}" -type d -path '*/tmp/deploy' 2>/dev/null | head -1 || true)"
