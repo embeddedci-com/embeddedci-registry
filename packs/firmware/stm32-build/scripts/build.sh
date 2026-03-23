@@ -68,6 +68,12 @@ else
   echo "stm32-build: CMSIS core not found in ${CMSIS_CORE_SRC_DIR}" >&2
   exit 1
 fi
+
+# Many STM32 projects keep stm32f4xx_hal_conf.h in firmware source root.
+# Mirror it into HAL include dir so vendor headers can always resolve it.
+if [[ -f "${BUILD_SRC}/stm32f4xx_hal_conf.h" ]]; then
+  cp -f "${BUILD_SRC}/stm32f4xx_hal_conf.h" "${HAL_DST}/Inc/stm32f4xx_hal_conf.h"
+fi
 export CUBE_F4="${CUBE_F4_DIR}"
 
 if [[ -n "${CMD:-}" ]]; then
