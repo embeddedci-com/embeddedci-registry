@@ -27,6 +27,42 @@ need() {
   done
 }
 
+yocto_has_locale() {
+  local wanted="${1,,}"
+  local entry
+
+  command -v locale >/dev/null 2>&1 || return 1
+  while IFS= read -r entry; do
+    [[ "${entry,,}" == "${wanted}" ]] && return 0
+  done < <(locale -a 2>/dev/null || true)
+  return 1
+}
+
+yocto_ensure_utf8_locale() {
+  # BitBake sanity checks require en_US.UTF-8 specifically.
+  if yocto_has_locale "en_US.utf8" || yocto_has_locale "en_US.UTF-8"; then
+    export LANG="en_US.UTF-8"
+    export LC_ALL="en_US.UTF-8"
+    export LANGUAGE="en_US:en"
+    return 0
+  fi
+
+  if command -v localedef >/dev/null 2>&1; then
+    echo "yocto-image: generating missing locale en_US.UTF-8 with localedef"
+    localedef -i en_US -f UTF-8 en_US.UTF-8 >/dev/null 2>&1 || true
+  fi
+
+  if yocto_has_locale "en_US.utf8" || yocto_has_locale "en_US.UTF-8"; then
+    export LANG="en_US.UTF-8"
+    export LC_ALL="en_US.UTF-8"
+    export LANGUAGE="en_US:en"
+    return 0
+  fi
+
+  echo "yocto-image: missing required locale en_US.UTF-8 (install locales or generate it with localedef)" >&2
+  exit 1
+}
+
 BUILD_ROOT="${BUILD_ROOT:-/build}"
 BUILD_ROOT="${BUILD_ROOT%/}"
 
@@ -36,6 +72,7 @@ python3 -m venv -h >/dev/null 2>&1 || {
   echo "yocto-image: need python3 venv support (e.g. apt install python3-venv)" >&2
   exit 1
 }
+yocto_ensure_utf8_locale
 
 yocto_resolve_path() {
   local p="${1:-}"
