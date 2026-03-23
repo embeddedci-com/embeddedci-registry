@@ -48,6 +48,12 @@ yocto_resolve_path() {
   fi
 }
 
+# Keep Python/pip caches in writable build storage.
+YOCTO_CACHE_DIR="$(yocto_resolve_path "${YOCTO_CACHE_DIR:-.cache}")"
+export XDG_CACHE_HOME="${YOCTO_CACHE_DIR}"
+export PIP_CACHE_DIR="${YOCTO_CACHE_DIR}/pip"
+mkdir -p "${XDG_CACHE_HOME}" "${PIP_CACHE_DIR}"
+
 YOCTO_STAGING_DIR="${YOCTO_STAGING_DIR:-yocto-staging}"
 YOCTO_STAGING_DIR="${YOCTO_STAGING_DIR#/}"
 
