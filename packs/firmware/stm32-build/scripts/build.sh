@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Build STM32 firmware in a writable copy of source and stage configured artifacts.
 # Env: BUILD_ROOT, PROJECT_ROOT, SRC, SRC_DIR, BUILD_SYSTEM, CMD,
-#      ARTIFACT_ELF, ARTIFACT_BIN, ARTIFACT_HEX, TOOLCHAIN
+#      ARTIFACT_ELF, ARTIFACT_BIN, ARTIFACT_HEX, TOOLCHAIN,
+#      STM32F4XX_HAL_DRIVER_SRC_DIR, CMSIS_DEVICE_F4_SRC_DIR, CMSIS_CORE_SRC_DIR
 
 set -euo pipefail
 
@@ -43,6 +44,31 @@ if [[ -n "${TOOLCHAIN:-}" ]]; then
   export SIZE="${TOOLCHAIN}-size"
   echo "stm32-build: toolchain=${TOOLCHAIN}"
 fi
+
+# Assemble expected STM32CubeF4 directory layout from fetched dependencies.
+: "${STM32F4XX_HAL_DRIVER_SRC_DIR:?STM32F4XX_HAL_DRIVER_SRC_DIR required}"
+: "${CMSIS_DEVICE_F4_SRC_DIR:?CMSIS_DEVICE_F4_SRC_DIR required}"
+: "${CMSIS_CORE_SRC_DIR:?CMSIS_CORE_SRC_DIR required}"
+
+CUBE_F4_DIR="${BUILD_SRC}/STM32CubeF4"
+HAL_DST="${CUBE_F4_DIR}/Drivers/STM32F4xx_HAL_Driver"
+CMSIS_ROOT="${CUBE_F4_DIR}/Drivers/CMSIS"
+CMSIS_DEVICE_DST="${CMSIS_ROOT}/Device/ST/STM32F4xx"
+CMSIS_CORE_DST="${CMSIS_ROOT}/Core"
+
+rm -rf "${HAL_DST}" "${CMSIS_DEVICE_DST}" "${CMSIS_CORE_DST}"
+mkdir -p "${CUBE_F4_DIR}/Drivers" "${CMSIS_ROOT}/Device/ST"
+cp -a "${STM32F4XX_HAL_DRIVER_SRC_DIR}" "${HAL_DST}"
+cp -a "${CMSIS_DEVICE_F4_SRC_DIR}" "${CMSIS_DEVICE_DST}"
+if [[ -d "${CMSIS_CORE_SRC_DIR}/CMSIS/Core" ]]; then
+  cp -a "${CMSIS_CORE_SRC_DIR}/CMSIS/Core" "${CMSIS_CORE_DST}"
+elif [[ -d "${CMSIS_CORE_SRC_DIR}/Core" ]]; then
+  cp -a "${CMSIS_CORE_SRC_DIR}/Core" "${CMSIS_CORE_DST}"
+else
+  echo "stm32-build: CMSIS core not found in ${CMSIS_CORE_SRC_DIR}" >&2
+  exit 1
+fi
+export CUBE_F4="${CUBE_F4_DIR}"
 
 if [[ -n "${CMD:-}" ]]; then
   eval "${CMD}"

@@ -1,14 +1,26 @@
 type: firmware
+image: ghcr.io/embeddedci-com/ubuntu-embedded-build-arm-toolchain:latest
 scripts:
   build: scripts/build.sh
 
-default_vars: {}
+default_vars:
+  stm32f4xx_hal_driver_src: https://github.com/STMicroelectronics/stm32f4xx_hal_driver.git
+  cmsis_device_f4_src: https://github.com/STMicroelectronics/cmsis_device_f4.git
+  cmsis_core_src: https://github.com/ARM-software/CMSIS_6.git
 
 dependencies:
   - pack: fetch
-    dest: "{{src_dir}}"
+    dest: stm32_src
     src: "{{src}}"
-    as: src_dir
+  - pack: fetch
+    dest: stm32f4xx_hal_driver_src
+    src: "{{stm32f4xx_hal_driver_src}}?ref=v1.8.5"
+  - pack: fetch
+    dest: cmsis_device_f4_src
+    src: "{{cmsis_device_f4_src}}?ref=v2.6.11"
+  - pack: fetch
+    dest: cmsis_core_src
+    src: "{{cmsis_core_src}}?ref=v6.3.0"
 
 artifacts:
   - path_var: artifact_elf
@@ -20,7 +32,10 @@ artifacts:
 
 config:
   src: "{{src}}"
-  src_dir: "{{build_root}}/src_dir"
+  src_dir: "{{build_root}}/stm32_src"
+  stm32f4xx_hal_driver_src_dir: "{{build_root}}/stm32f4xx_hal_driver_src"
+  cmsis_device_f4_src_dir: "{{build_root}}/cmsis_device_f4_src"
+  cmsis_core_src_dir: "{{build_root}}/cmsis_core_src"
   build_system: "{{build_system}}"
   cmd: "{{cmd}}"
   artifact_elf: "{{artifact_elf}}"
