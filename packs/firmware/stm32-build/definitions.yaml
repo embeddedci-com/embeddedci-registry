@@ -1,0 +1,29 @@
+type: firmware
+scripts:
+  build: scripts/build.sh
+
+default_vars: {}
+
+dependencies:
+  - pack: fetch
+    dest: "{{src_dir}}"
+    src: "{{src}}"
+    as: src_dir
+
+artifacts:
+  - path_var: artifact_elf
+    path_prefix: "out/stm32-build/"
+  - path_var: artifact_bin
+    path_prefix: "out/stm32-build/"
+  - path_var: artifact_hex
+    path_prefix: "out/stm32-build/"
+
+config:
+  src: "{{src}}"
+  src_dir: "{{build_root}}/src_dir"
+  build_system: "{{build_system}}"
+  cmd: "{{cmd}}"
+  artifact_elf: "{{artifact_elf}}"
+  artifact_bin: "{{artifact_bin}}"
+  artifact_hex: "{{artifact_hex}}"
+  toolchain: "{{toolchain}}"
