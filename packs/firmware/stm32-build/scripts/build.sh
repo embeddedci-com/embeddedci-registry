@@ -69,6 +69,12 @@ else
   exit 1
 fi
 
+# Many STM32 projects include CMSIS core headers via Drivers/CMSIS/Include.
+# CMSIS_6 ships them in Drivers/CMSIS/Core/Include, so provide compatibility.
+if [[ ! -e "${CMSIS_ROOT}/Include" && -d "${CMSIS_CORE_DST}/Include" ]]; then
+  ln -s "Core/Include" "${CMSIS_ROOT}/Include"
+fi
+
 # Many STM32 projects keep stm32f4xx_hal_conf.h in firmware source root.
 # Mirror it into HAL include dir so vendor headers can always resolve it.
 if [[ -f "${BUILD_SRC}/stm32f4xx_hal_conf.h" ]]; then
