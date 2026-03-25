@@ -13,7 +13,7 @@
 # Paths:
 #   BUILD_ROOT, YOCTO_STAGING_DIR, YOCTO_SSTATE_DIR, YOCTO_DL_DIR — see definitions.yaml
 #
-# Required on PATH: cp, dirname, find, head, jq, locale, mkdir, rm, python3 (+ venv), git.
+# Required on PATH: cp, dirname, find, head, jq, mkdir, rm, python3 (+ venv), git.
 
 set -euo pipefail
 
@@ -27,80 +27,25 @@ need() {
   done
 }
 
-yocto_find_preferred_utf8_locale() {
-  local entry
-  local fallback=""
-  while IFS= read -r entry; do
-    case "${entry,,}" in
-      en_us.utf8|en_us.utf-8)
-        echo "${entry}"
-        return 0
-        ;;
-      c.utf8|c.utf-8)
-        fallback="${entry}"
-        ;;
-      *".utf8"|*".utf-8")
-        [[ -z "${fallback}" ]] && fallback="${entry}"
-        ;;
-    esac
-  done < <(locale -a 2>/dev/null || true)
-
-  if [[ -n "${fallback}" ]]; then
-    echo "${fallback}"
-    return 0
-  fi
-  return 1
-}
-
-yocto_find_en_us_utf8_locale() {
-  local entry
-  while IFS= read -r entry; do
-    case "${entry,,}" in
-      en_us.utf8|en_us.utf-8)
-        echo "${entry}"
-        return 0
-        ;;
-    esac
-  done < <(locale -a 2>/dev/null || true)
-  return 1
-}
-
-yocto_ensure_utf8_locale() {
-  # BitBake sanity checks require a UTF-8 locale. Prefer en_US, then C.UTF-8, then any UTF-8 locale.
-  local chosen=""
-  chosen="$(yocto_find_preferred_utf8_locale || true)"
-
-  if [[ -z "${chosen}" ]] && command -v localedef >/dev/null 2>&1; then
-    echo "yocto-image: generating missing locale en_US.UTF-8 with localedef"
-    localedef -i en_US -f UTF-8 en_US.UTF-8 >/dev/null 2>&1 || true
-    chosen="$(yocto_find_preferred_utf8_locale || true)"
-  fi
-
-  if [[ -z "${chosen}" ]]; then
-    echo "yocto-image: missing required UTF-8 locale (install locales or generate one with localedef)" >&2
-    exit 1
-  fi
-
-  # Use the actually installed locale name and avoid forcing LC_ALL.
-  export LANG="${chosen}"
-  if [[ "${chosen,,}" == en_us.utf8 || "${chosen,,}" == en_us.utf-8 ]]; then
-    export LANGUAGE="en_US:en"
-  else
-    unset LANGUAGE || true
-  fi
-  unset LC_ALL || true
-}
-
 BUILD_ROOT="${BUILD_ROOT:-/build}"
 BUILD_ROOT="${BUILD_ROOT%/}"
 
 # Host tools this script uses; kas/bitbake will also invoke git.
-need cp dirname find head jq locale mkdir rm python3 git
+need cp dirname find head jq mkdir rm python3 git
 python3 -m venv -h >/dev/null 2>&1 || {
   echo "yocto-image: need python3 venv support (e.g. apt install python3-venv)" >&2
   exit 1
 }
-yocto_ensure_utf8_locale
+
+# BitBake sanity checks require en_US.UTF-8 to be available.
+# This script only verifies; the Firecracker/container image should provision it.
+if ! python3 -c "import locale; locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')" >/dev/null 2>&1; then
+  echo "yocto-image: missing required locale en_US.UTF-8 (bake it into the image)" >&2
+  exit 1
+fi
+export LANG="en_US.UTF-8"
+export LANGUAGE="en_US:en"
+unset LC_ALL || true
 
 yocto_resolve_path() {
   local p="${1:-}"
