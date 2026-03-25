@@ -27,6 +27,31 @@ need() {
   done
 }
 
+yocto_find_preferred_utf8_locale() {
+  local entry
+  local fallback=""
+  while IFS= read -r entry; do
+    case "${entry,,}" in
+      en_us.utf8|en_us.utf-8)
+        echo "${entry}"
+        return 0
+        ;;
+      c.utf8|c.utf-8)
+        fallback="${entry}"
+        ;;
+      *".utf8"|*".utf-8")
+        [[ -z "${fallback}" ]] && fallback="${entry}"
+        ;;
+    esac
+  done < <(locale -a 2>/dev/null || true)
+
+  if [[ -n "${fallback}" ]]; then
+    echo "${fallback}"
+    return 0
+  fi
+  return 1
+}
+
 yocto_find_en_us_utf8_locale() {
   local entry
   while IFS= read -r entry; do
@@ -41,24 +66,28 @@ yocto_find_en_us_utf8_locale() {
 }
 
 yocto_ensure_utf8_locale() {
-  # BitBake sanity checks require an en_US UTF-8 locale to exist.
+  # BitBake sanity checks require a UTF-8 locale. Prefer en_US, then C.UTF-8, then any UTF-8 locale.
   local chosen=""
-  chosen="$(yocto_find_en_us_utf8_locale || true)"
+  chosen="$(yocto_find_preferred_utf8_locale || true)"
 
   if [[ -z "${chosen}" ]] && command -v localedef >/dev/null 2>&1; then
     echo "yocto-image: generating missing locale en_US.UTF-8 with localedef"
     localedef -i en_US -f UTF-8 en_US.UTF-8 >/dev/null 2>&1 || true
-    chosen="$(yocto_find_en_us_utf8_locale || true)"
+    chosen="$(yocto_find_preferred_utf8_locale || true)"
   fi
 
   if [[ -z "${chosen}" ]]; then
-    echo "yocto-image: missing required locale en_US.UTF-8 (install locales or generate it with localedef)" >&2
+    echo "yocto-image: missing required UTF-8 locale (install locales or generate one with localedef)" >&2
     exit 1
   fi
 
   # Use the actually installed locale name and avoid forcing LC_ALL.
   export LANG="${chosen}"
-  export LANGUAGE="en_US:en"
+  if [[ "${chosen,,}" == en_us.utf8 || "${chosen,,}" == en_us.utf-8 ]]; then
+    export LANGUAGE="en_US:en"
+  else
+    unset LANGUAGE || true
+  fi
   unset LC_ALL || true
 }
 
