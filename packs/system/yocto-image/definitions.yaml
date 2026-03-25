@@ -4,13 +4,14 @@ type: yocto
 config:
   source: "{{source}}"
   kas_config_src: "{{build_root}}/kas_config_src"
-  kas_file: kas.yml
+  kas_file: "{{kas_file}}"
   yocto_staging_dir: yocto-staging
   yocto_sstate_dir: yocto/sstate
   yocto_dl_dir: yocto/downloads
 
 default_vars:
   source: ""
+  kas_file: kas.yml
 
 scripts:
   build: scripts/build.sh
@@ -22,3 +23,7 @@ dependencies:
 
 artifacts:
   - path: yocto-staging
+
+skip:
+  check_paths:
+    - yocto-staging

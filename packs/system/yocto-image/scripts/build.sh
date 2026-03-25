@@ -13,7 +13,7 @@
 # Paths:
 #   BUILD_ROOT, YOCTO_STAGING_DIR, YOCTO_SSTATE_DIR, YOCTO_DL_DIR — see definitions.yaml
 #
-# Required on PATH: cp, dirname, find, head, jq, mkdir, rm, python3 (+ venv), git.
+# Required on PATH: cp, dirname, find, head, jq, locale, mkdir, rm, python3 (+ venv), git.
 
 set -euo pipefail
 
@@ -27,47 +27,46 @@ need() {
   done
 }
 
-yocto_has_locale() {
-  local wanted="${1,,}"
+yocto_find_en_us_utf8_locale() {
   local entry
-
-  command -v locale >/dev/null 2>&1 || return 1
   while IFS= read -r entry; do
-    [[ "${entry,,}" == "${wanted}" ]] && return 0
+    case "${entry,,}" in
+      en_us.utf8|en_us.utf-8)
+        echo "${entry}"
+        return 0
+        ;;
+    esac
   done < <(locale -a 2>/dev/null || true)
   return 1
 }
 
 yocto_ensure_utf8_locale() {
-  # BitBake sanity checks require en_US.UTF-8 specifically.
-  if yocto_has_locale "en_US.utf8" || yocto_has_locale "en_US.UTF-8"; then
-    export LANG="en_US.UTF-8"
-    export LC_ALL="en_US.UTF-8"
-    export LANGUAGE="en_US:en"
-    return 0
-  fi
+  # BitBake sanity checks require an en_US UTF-8 locale to exist.
+  local chosen=""
+  chosen="$(yocto_find_en_us_utf8_locale || true)"
 
-  if command -v localedef >/dev/null 2>&1; then
+  if [[ -z "${chosen}" ]] && command -v localedef >/dev/null 2>&1; then
     echo "yocto-image: generating missing locale en_US.UTF-8 with localedef"
     localedef -i en_US -f UTF-8 en_US.UTF-8 >/dev/null 2>&1 || true
+    chosen="$(yocto_find_en_us_utf8_locale || true)"
   fi
 
-  if yocto_has_locale "en_US.utf8" || yocto_has_locale "en_US.UTF-8"; then
-    export LANG="en_US.UTF-8"
-    export LC_ALL="en_US.UTF-8"
-    export LANGUAGE="en_US:en"
-    return 0
+  if [[ -z "${chosen}" ]]; then
+    echo "yocto-image: missing required locale en_US.UTF-8 (install locales or generate it with localedef)" >&2
+    exit 1
   fi
 
-  echo "yocto-image: missing required locale en_US.UTF-8 (install locales or generate it with localedef)" >&2
-  exit 1
+  # Use the actually installed locale name and avoid forcing LC_ALL.
+  export LANG="${chosen}"
+  export LANGUAGE="en_US:en"
+  unset LC_ALL || true
 }
 
 BUILD_ROOT="${BUILD_ROOT:-/build}"
 BUILD_ROOT="${BUILD_ROOT%/}"
 
 # Host tools this script uses; kas/bitbake will also invoke git.
-need cp dirname find head jq mkdir rm python3 git
+need cp dirname find head jq locale mkdir rm python3 git
 python3 -m venv -h >/dev/null 2>&1 || {
   echo "yocto-image: need python3 venv support (e.g. apt install python3-venv)" >&2
   exit 1
@@ -131,9 +130,9 @@ echo "yocto-image: kas build ${KAS_YML_NAME} in ${KAS_WORK}"
   "${KAS_BIN}" build "${KAS_YML_NAME}"
 )
 
-deploy_root="$(find "${BUILD_ROOT}" -type d -path '*/tmp/deploy' 2>/dev/null | head -1 || true)"
+deploy_root="$(find "${KAS_WORK}" -type d -path '*/tmp/deploy' 2>/dev/null | head -1 || true)"
 if [[ -z "${deploy_root}" ]]; then
-  echo "yocto-image: could not find */tmp/deploy under ${BUILD_ROOT}" >&2
+  echo "yocto-image: could not find */tmp/deploy under ${KAS_WORK}" >&2
   exit 1
 fi
 echo "yocto-image: deploy root ${deploy_root}"
