@@ -43,9 +43,12 @@ if ! python3 -c "import locale; locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')" 
   echo "yocto-image: missing required locale en_US.UTF-8 (bake it into the image)" >&2
   exit 1
 fi
-export LANG="en_US.UTF-8"
-export LANGUAGE="en_US:en"
-unset LC_ALL || true
+export LANG=en_US.UTF-8
+export LANGUAGE=en_US:en
+export LC_ALL=en_US.UTF-8
+
+locale
+env | grep -E '^(LANG|LANGUAGE|LC_)'
 
 yocto_resolve_path() {
   local p="${1:-}"
