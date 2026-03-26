@@ -8,6 +8,7 @@ dependencies:
   - pack: fetch
     dest: "{{artifact}}"
     src: "{{src}}"
+    optional: true
 
 artifacts:
   - path_var: artifact
