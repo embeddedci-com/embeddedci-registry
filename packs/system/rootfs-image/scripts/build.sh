@@ -21,6 +21,25 @@ set -euo pipefail
 
 need() { command -v "$1" >/dev/null 2>&1 || { echo "Missing '$1'"; exit 1; }; }
 
+safe_chown() {
+  local owner="$1"
+  shift
+
+  if chown "$owner" "$@" 2>/dev/null; then
+    return 0
+  fi
+
+  # Non-root builds (without fakeroot) cannot set ownership. Continue so image
+  # creation still works in restricted environments.
+  if [[ "$(id -u)" -ne 0 && -z "${FAKEROOTKEY:-}" ]]; then
+    echo "WARNING: unable to chown ${owner} on: $* (non-root build; continuing)"
+    return 0
+  fi
+
+  echo "ERROR: chown ${owner} failed for: $*"
+  return 1
+}
+
 truthy() {
   case "${1:-}" in
     1|true|TRUE|yes|YES|y|Y|on|ON|enabled|ENABLED) return 0 ;;
@@ -74,6 +93,13 @@ if ! command -v "${BOARD_STRIP}" >/dev/null 2>&1; then
   BOARD_STRIP="${BOARD_CC%-gcc}-strip"
 fi
 need "${BOARD_STRIP}"
+
+# Non-root builds (e.g. builduser) need fakeroot for rootfs ownership metadata.
+if [[ "$(id -u)" -ne 0 && -z "${FAKEROOTKEY:-}" ]]; then
+  need fakeroot
+  echo "[*] Re-executing under fakeroot for rootfs ownership metadata..."
+  exec fakeroot -- "$0" "$@"
+fi
 
 echo "[*] Board toolchain:"
 echo "    BOARD_CC=${BOARD_CC}"
@@ -206,11 +232,11 @@ EOF
 fi
 
 # Ownership
-chown 0:0 "${ROOTDIR}/root"
+safe_chown 0:0 "${ROOTDIR}/root"
 if [[ -n "${ROOTFS_USER}" ]]; then
-  chown 1000:1000 "${ROOTDIR}/home/${ROOTFS_USER}"
+  safe_chown 1000:1000 "${ROOTDIR}/home/${ROOTFS_USER}"
 fi
-chown 0:0 \
+safe_chown 0:0 \
   "${ROOTDIR}/etc/passwd" \
   "${ROOTDIR}/etc/group" \
   "${ROOTDIR}/etc/shadow" \
