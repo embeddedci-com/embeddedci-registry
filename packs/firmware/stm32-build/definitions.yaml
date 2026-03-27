@@ -12,6 +12,7 @@ dependencies:
   - pack: fetch
     dest: stm32_src
     src: "{{src}}"
+    optional: true
   - pack: fetch
     dest: stm32f4xx_hal_driver_src
     src: "{{stm32f4xx_hal_driver_src}}?ref=v1.8.5"
