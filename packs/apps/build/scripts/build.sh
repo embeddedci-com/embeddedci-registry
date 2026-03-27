@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build an application. Runs CMD in a writable copy of SRC; artifact is the produced binary.
 # PROJECT is mounted read-only, so we copy SRC to BUILD_ROOT and build there.
-# Env: BUILD_ROOT, PROJECT_ROOT, CMD, SRC, ARTIFACT
+# Env: BUILD_ROOT, PROJECT_ROOT, CMD, SRC (optional), ARTIFACT
 # Board (target) env from boards/{target}/definitions.yaml:
 #   Go:   BOARD_ARCH, BOARD_GO_OS, BOARD_GO_ARCH → GOOS, GOARCH
 #   C:    BOARD_CC, BOARD_CROSS_COMPILE, BOARD_AR → CC, CROSS_COMPILE, AR
@@ -14,25 +14,35 @@ set -e
 : "${BUILD_ROOT:?BUILD_ROOT required}"
 : "${PROJECT_ROOT:?PROJECT_ROOT required}"
 : "${CMD:?CMD required}"
-: "${SRC:?SRC required}"
 : "${ARTIFACT:?ARTIFACT required}"
 
-# SRC is either a path relative to PROJECT_ROOT (local) or an absolute path under BUILD_ROOT (git fetch).
-if [[ "${SRC}" == /* ]]; then
-  APP_SRC="${SRC}"
+# Resolve source:
+# - SRC set: relative to PROJECT_ROOT or absolute path
+# - SRC empty: source/archive is already extracted in BUILD_ROOT
+if [[ -n "${SRC:-}" ]]; then
+  if [[ "${SRC}" == /* ]]; then
+    APP_SRC="${SRC}"
+  else
+    APP_SRC="${PROJECT_ROOT}/${SRC}"
+  fi
 else
-  APP_SRC="${PROJECT_ROOT}/${SRC}"
+  APP_SRC="${BUILD_ROOT}"
 fi
+
 if [[ ! -d "${APP_SRC}" ]]; then
   echo "App source not found: ${APP_SRC}"
   exit 1
 fi
 
-# Copy source to writable area (project is mounted read-only)
-BUILD_SRC="${BUILD_ROOT}/app-src"
-rm -rf "${BUILD_SRC}"
-mkdir -p "${BUILD_SRC}"
-cp -a "${APP_SRC}/." "${BUILD_SRC}/"
+# Copy source to writable area when source is outside BUILD_ROOT.
+if [[ "${APP_SRC}" == "${BUILD_ROOT}" ]]; then
+  BUILD_SRC="${BUILD_ROOT}"
+else
+  BUILD_SRC="${BUILD_ROOT}/app-src"
+  rm -rf "${BUILD_SRC}"
+  mkdir -p "${BUILD_SRC}"
+  cp -a "${APP_SRC}/." "${BUILD_SRC}/"
+fi
 
 cd "${BUILD_SRC}"
 

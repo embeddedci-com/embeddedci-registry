@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build STM32 firmware in a writable copy of source and stage configured artifacts.
-# Env: BUILD_ROOT, PROJECT_ROOT, SRC, SRC_DIR, BUILD_SYSTEM, CMD,
+# Env: BUILD_ROOT, PROJECT_ROOT, SRC (optional), SRC_DIR, BUILD_SYSTEM, CMD,
 #      ARTIFACT_ELF, ARTIFACT_BIN, ARTIFACT_HEX, TOOLCHAIN,
 #      STM32F4XX_HAL_DRIVER_SRC_DIR, CMSIS_DEVICE_F4_SRC_DIR, CMSIS_CORE_SRC_DIR
 
@@ -8,17 +8,20 @@ set -euo pipefail
 
 : "${BUILD_ROOT:?BUILD_ROOT required}"
 : "${PROJECT_ROOT:?PROJECT_ROOT required}"
-: "${SRC:?SRC required}"
 : "${ARTIFACT_ELF:?ARTIFACT_ELF required}"
 : "${ARTIFACT_BIN:?ARTIFACT_BIN required}"
 : "${ARTIFACT_HEX:?ARTIFACT_HEX required}"
 
 if [[ -n "${SRC_DIR:-}" && -d "${SRC_DIR}" ]]; then
   FW_SRC="${SRC_DIR}"
-elif [[ "${SRC}" == /* ]]; then
-  FW_SRC="${SRC}"
+elif [[ -n "${SRC:-}" ]]; then
+  if [[ "${SRC}" == /* ]]; then
+    FW_SRC="${SRC}"
+  else
+    FW_SRC="${PROJECT_ROOT}/${SRC}"
+  fi
 else
-  FW_SRC="${PROJECT_ROOT}/${SRC}"
+  FW_SRC="${BUILD_ROOT}"
 fi
 
 if [[ ! -d "${FW_SRC}" ]]; then
@@ -26,10 +29,15 @@ if [[ ! -d "${FW_SRC}" ]]; then
   exit 1
 fi
 
-BUILD_SRC="${BUILD_ROOT}/stm32-src"
-rm -rf "${BUILD_SRC}"
-mkdir -p "${BUILD_SRC}"
-cp -a "${FW_SRC}/." "${BUILD_SRC}/"
+# Avoid recursive copy when source is already BUILD_ROOT.
+if [[ "${FW_SRC}" == "${BUILD_ROOT}" ]]; then
+  BUILD_SRC="${BUILD_ROOT}"
+else
+  BUILD_SRC="${BUILD_ROOT}/stm32-src"
+  rm -rf "${BUILD_SRC}"
+  mkdir -p "${BUILD_SRC}"
+  cp -a "${FW_SRC}/." "${BUILD_SRC}/"
+fi
 cd "${BUILD_SRC}"
 
 # Common GNU Arm Embedded toolchain env (used by many Make/CMake projects).
