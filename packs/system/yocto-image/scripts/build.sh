@@ -12,6 +12,7 @@
 #
 # Paths:
 #   BUILD_ROOT, YOCTO_STAGING_DIR, YOCTO_SSTATE_DIR, YOCTO_DL_DIR — see definitions.yaml
+#   YOCTO_GIT_MIRRORS_ROOT (optional; default /cache/git-mirrors)
 #
 # Required on PATH: cp, dirname, find, head, jq, mkdir, rm, python3 (+ venv), git.
 
@@ -69,6 +70,25 @@ mkdir -p "${XDG_CACHE_HOME}" "${PIP_CACHE_DIR}"
 
 YOCTO_STAGING_DIR="${YOCTO_STAGING_DIR:-yocto-staging}"
 YOCTO_STAGING_DIR="${YOCTO_STAGING_DIR#/}"
+
+# Configure BitBake PREMIRRORS for local bare git mirrors laid out as:
+#   ${YOCTO_GIT_MIRRORS_ROOT}/${HOST}/${PATH}
+# Example:
+#   /cache/git-mirrors/github.com/beagleboard/linux.git
+YOCTO_GIT_MIRRORS_ROOT="${YOCTO_GIT_MIRRORS_ROOT:-/cache/git-mirrors}"
+YOCTO_GIT_MIRRORS_ROOT="${YOCTO_GIT_MIRRORS_ROOT%/}"
+if [[ -d "${YOCTO_GIT_MIRRORS_ROOT}" ]]; then
+  local_git_premirrors="\
+git://.*/.* file://${YOCTO_GIT_MIRRORS_ROOT}/HOST/PATH \
+gitsm://.*/.* file://${YOCTO_GIT_MIRRORS_ROOT}/HOST/PATH"
+  if [[ -n "${PREMIRRORS:-}" ]]; then
+    export PREMIRRORS="${local_git_premirrors} ${PREMIRRORS}"
+  else
+    export PREMIRRORS="${local_git_premirrors}"
+  fi
+  export BB_ENV_PASSTHROUGH_ADDITIONS="${BB_ENV_PASSTHROUGH_ADDITIONS:-} PREMIRRORS"
+  echo "yocto-image: enabled local git premirrors from ${YOCTO_GIT_MIRRORS_ROOT}"
+fi
 
 KAS_WORK="${KAS_CONFIG_SRC:-}"
 if [[ -z "${KAS_WORK}" || ! -d "${KAS_WORK}" ]]; then
