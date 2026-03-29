@@ -154,10 +154,9 @@ export SSTATE_DIR DL_DIR
 mkdir -p "${SSTATE_DIR}" "${DL_DIR}"
 echo "yocto-image: KAS_WORK=${KAS_WORK} SSTATE_DIR=${SSTATE_DIR} DL_DIR=${DL_DIR}"
 
-echo "yocto-image: kas fetchall + build ${KAS_YML_NAME} in ${KAS_WORK}"
+echo "yocto-image: kas build ${KAS_YML_NAME} in ${KAS_WORK}"
 (
   cd "${KAS_WORK}"
-  "${KAS_BIN}" build "${KAS_YML_NAME}" -c fetchall
   "${KAS_BIN}" build "${KAS_YML_NAME}"
 )
 
