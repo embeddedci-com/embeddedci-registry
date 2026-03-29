@@ -12,7 +12,10 @@
 #
 # Paths:
 #   BUILD_ROOT, YOCTO_STAGING_DIR, YOCTO_SSTATE_DIR, YOCTO_DL_DIR — see definitions.yaml
-#   YOCTO_GIT_MIRRORS_ROOT (optional; default /cache/git-mirrors)
+#   YOCTO_GIT_MIRROR_LIST (optional; default /cache/git-mirror-list.txt)
+#     Lines: upstream_git_url|/absolute/path/to/bare/mirror.git (see delimiter note in that file).
+#     When present and non-empty, BitBake uses explicit PREMIRRORS to local bare repos, plus
+#     BB_FETCH_PREMIRRORONLY=1 and BB_NO_NETWORK=1 (no own-mirrors / SOURCE_MIRROR_URL).
 #
 # Required on PATH: cp, dirname, find, head, jq, mkdir, rm, python3 (+ venv), git.
 
@@ -71,19 +74,53 @@ mkdir -p "${XDG_CACHE_HOME}" "${PIP_CACHE_DIR}"
 YOCTO_STAGING_DIR="${YOCTO_STAGING_DIR:-yocto-staging}"
 YOCTO_STAGING_DIR="${YOCTO_STAGING_DIR#/}"
 
-# Configure BitBake own-mirrors for local bare git mirrors under:
-#   ${YOCTO_GIT_MIRRORS_ROOT}/${HOST}/${PATH}
-# Example:
-#   /cache/git-mirrors/github.com/beagleboard/linux.git
-#   /cache/git-mirrors/git2/...
-YOCTO_GIT_MIRRORS_ROOT="${YOCTO_GIT_MIRRORS_ROOT:-/cache/git-mirrors}"
-YOCTO_GIT_MIRRORS_ROOT="${YOCTO_GIT_MIRRORS_ROOT%/}"
-if [[ -d "${YOCTO_GIT_MIRRORS_ROOT}" ]]; then
-  export INHERIT="${INHERIT:+${INHERIT} }own-mirrors"
-  export SOURCE_MIRROR_URL="file://${YOCTO_GIT_MIRRORS_ROOT}"
+# Local bare git mirrors: map each upstream URL from YOCTO_GIT_MIRROR_LIST to git:///path
+# (PREMIRRORS replacement), not SOURCE_MIRROR_URL tarball layout (own-mirrors).
+yocto_trim() {
+  local s="${1:-}"
+  s="${s#"${s%%[![:space:]]*}"}"
+  s="${s%"${s##*[![:space:]]}"}"
+  printf '%s' "${s}"
+}
+
+YOCTO_GIT_MIRROR_LIST="${YOCTO_GIT_MIRROR_LIST:-/cache/git-mirror-list.txt}"
+PREMIRRORS_BUILD=""
+if [[ -f "${YOCTO_GIT_MIRROR_LIST}" ]]; then
+  while IFS= read -r raw_line || [[ -n "${raw_line}" ]]; do
+    line="${raw_line%%#*}"
+    line="$(yocto_trim "${line}")"
+    [[ -z "${line}" ]] && continue
+    [[ "${line}" != *"|"* ]] && continue
+    upstream="$(yocto_trim "${line%%|*}")"
+    local_path="$(yocto_trim "${line#*|}")"
+    [[ -z "${upstream}" || -z "${local_path}" ]] && continue
+    [[ "${local_path}" != /* ]] && {
+      echo "yocto-image: skip mirror entry (local path must be absolute): ${raw_line}" >&2
+      continue
+    }
+    replacement="git://${local_path}"
+    # BitBake matches SRC_URI scheme; emit both https and git forms when upstream is https.
+    PREMIRRORS_BUILD+="${upstream}  ${replacement}"$'\n'
+    if [[ "${upstream}" == https://* ]]; then
+      git_form="git://${upstream#https://}"
+      PREMIRRORS_BUILD+="${git_form}  ${replacement}"$'\n'
+    elif [[ "${upstream}" == git://* ]]; then
+      https_form="https://${upstream#git://}"
+      PREMIRRORS_BUILD+="${https_form}  ${replacement}"$'\n'
+    fi
+  done < "${YOCTO_GIT_MIRROR_LIST}"
+fi
+
+if [[ -n "${PREMIRRORS_BUILD}" ]]; then
+  export PREMIRRORS="${PREMIRRORS_BUILD}"
   export BB_FETCH_PREMIRRORONLY="1"
-  export BB_ENV_PASSTHROUGH_ADDITIONS="${BB_ENV_PASSTHROUGH_ADDITIONS:-} INHERIT SOURCE_MIRROR_URL BB_FETCH_PREMIRRORONLY"
-  echo "yocto-image: enabled own-mirrors from ${YOCTO_GIT_MIRRORS_ROOT} (premirror-only)"
+  export BB_NO_NETWORK="1"
+  export BB_ENV_PASSTHROUGH_ADDITIONS="${BB_ENV_PASSTHROUGH_ADDITIONS:-} PREMIRRORS BB_FETCH_PREMIRRORONLY BB_NO_NETWORK"
+  echo "yocto-image: PREMIRRORS + premirror-only + no-network from ${YOCTO_GIT_MIRROR_LIST}"
+  # After env is active in the build tree: bitbake -e <recipe> | egrep '^(INHERIT|SOURCE_MIRROR_URL|PREMIRRORS|BB_FETCH_PREMIRRORONLY|BB_NO_NETWORK)='
+else
+  [[ -f "${YOCTO_GIT_MIRROR_LIST}" ]] &&
+    echo "yocto-image: ${YOCTO_GIT_MIRROR_LIST} has no usable entries; network fetch unchanged" >&2
 fi
 
 KAS_WORK="${KAS_CONFIG_SRC:-}"
