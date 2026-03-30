@@ -1,0 +1,20 @@
+# Example (build definition pack entry — supply prebuilt binaries instead of e.g. system/kernel-linux / system/uboot):
+#   packs:
+#     - id: import/artifacts
+#       artifacts:
+#         - path: kernel/zImage
+#           source_path: prebuilt/zImage
+#         - path: kernel/dtbs
+#           source_path: prebuilt/dtbs
+#         - path: uboot/u-boot.bin
+#           source_path: /absolute/path/to/u-boot.img
+#       # `artifacts` is top-level in the pack entry (not under `config`).
+#
+# Runtime: the build receives PACK_ARTIFACTS_JSON (resolved artifact list with source_path/path).
+type: import
+scripts:
+  build: scripts/build.sh
+
+dependencies: []
+
+artifacts: []
