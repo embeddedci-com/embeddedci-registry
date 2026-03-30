@@ -1,13 +1,13 @@
 # Example (build definition pack entry):
 #   packs:
 #     - id: system/yocto-image
+#       artifacts:
+#         - path: images/beaglebone/core-image-minimal-beaglebone.wic
+#         - path: images/beaglebone/zImage
+#         - path: images/beaglebone/am335x-boneblack.dtb
 #       config:
 #         source: git+https://github.com/embeddedci-com/examples.git//yocto-kas-image?ref=main
 #         kas_file: kas.yml
-#         artifacts:
-#           - images/beaglebone/core-image-minimal-beaglebone.wic
-#           - images/beaglebone/zImage
-#           - images/beaglebone/am335x-boneblack.dtb
 type: yocto
 
 # Same pattern as buildroot-kernel: `source` is the git URL (git+https://...//subpath?ref=...); engine fetch clones it.

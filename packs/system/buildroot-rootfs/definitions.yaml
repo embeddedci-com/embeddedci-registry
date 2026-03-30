@@ -49,5 +49,5 @@ dependencies:
     optional: true
 
 artifacts:
-  - path: rootfs.ext4
-    build_path: "buildroot_out/images/rootfs.ext4"
+  - path: "buildroot_out/images/rootfs.ext4"
+    name: rootfs.ext4

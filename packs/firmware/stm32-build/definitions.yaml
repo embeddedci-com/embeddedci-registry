@@ -35,12 +35,12 @@ dependencies:
     src: "{{cmsis_core_src}}?ref=v6.3.0"
 
 artifacts:
-  - path_var: artifact_elf
-    path_prefix: "out/stm32-build/"
-  - path_var: artifact_bin
-    path_prefix: "out/stm32-build/"
-  - path_var: artifact_hex
-    path_prefix: "out/stm32-build/"
+  - path: "out/stm32-build/{{artifact_elf}}"
+    name: "{{artifact_elf}}"
+  - path: "out/stm32-build/{{artifact_bin}}"
+    name: "{{artifact_bin}}"
+  - path: "out/stm32-build/{{artifact_hex}}"
+    name: "{{artifact_hex}}"
 
 config:
   src: "{{src}}"
