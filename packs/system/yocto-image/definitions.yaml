@@ -32,7 +32,8 @@ dependencies:
     src: "{{source}}"
 
 artifacts:
-  - path: yocto-staging
+  - name: deploy-images
+    path: "tmp/deploy/images/"
 
 skip:
   check_paths:

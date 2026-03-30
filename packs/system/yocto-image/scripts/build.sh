@@ -8,7 +8,11 @@
 #   SOURCE            Git URL from pack config (may be rewritten to KAS_CONFIG_SRC path when it matched fetch)
 #   KAS_CONFIG_SRC    Directory containing kas.yml (from definitions config template)
 #   KAS_FILE          Kas manifest filename (default kas.yml)
-#   ARTIFACTS         JSON array of paths relative to tmp/deploy (parsed with jq)
+#   PACK_ARTIFACTS_JSON
+#                     JSON array of artifact objects from resolved artifacts list:
+#                     [{"name":"...","path":"...","source_path":"...","optional":false}, ...]
+#                     This script consumes each artifact object's `path` as a path
+#                     relative to tmp/deploy.
 #
 # Paths:
 #   BUILD_ROOT, YOCTO_STAGING_DIR, YOCTO_SSTATE_DIR, YOCTO_DL_DIR — see definitions.yaml
@@ -171,12 +175,12 @@ staging="${BUILD_ROOT}/${YOCTO_STAGING_DIR}"
 rm -rf "${staging}"
 mkdir -p "${staging}"
 
-if [[ -z "${ARTIFACTS:-}" ]]; then
-  echo "yocto-image: ARTIFACTS must be set (JSON array of paths under tmp/deploy)" >&2
+if [[ -z "${PACK_ARTIFACTS_JSON:-}" ]]; then
+  echo "yocto-image: PACK_ARTIFACTS_JSON must be set (JSON array of artifact objects)" >&2
   exit 1
 fi
-if ! jq -e 'type == "array" and length > 0' <<<"${ARTIFACTS}" >/dev/null 2>&1; then
-  echo "yocto-image: ARTIFACTS must be a non-empty JSON array" >&2
+if ! jq -e 'type == "array" and length > 0' <<<"${PACK_ARTIFACTS_JSON}" >/dev/null 2>&1; then
+  echo "yocto-image: PACK_ARTIFACTS_JSON must be a non-empty JSON array" >&2
   exit 1
 fi
 
@@ -191,6 +195,6 @@ while IFS= read -r rel; do
   mkdir -p "$(dirname "${dst}")"
   cp -a "${src}" "${dst}"
   echo "yocto-image: staged ${rel}"
-done < <(jq -r '.[]' <<< "${ARTIFACTS}")
+done < <(jq -r '.[] | select(type == "object") | .path // empty' <<< "${PACK_ARTIFACTS_JSON}")
 
 echo "yocto-image: done, staging dir ${staging}"
