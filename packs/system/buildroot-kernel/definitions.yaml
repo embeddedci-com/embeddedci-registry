@@ -1,3 +1,11 @@
+# Example (build definition pack entry):
+#   packs:
+#     - id: system/buildroot-kernel
+#       config:
+#         ref: v6.12
+#         arch: arm64
+#         source: git+https://github.com/embeddedci-com/examples.git//buildroot-external/generic-kernel?ref=main
+#         buildroot_defconfig: arm_defconfig
 type: kernel
 
 config:

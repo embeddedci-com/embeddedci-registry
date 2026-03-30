@@ -1,3 +1,6 @@
+# Example (build definition pack entry):
+#   packs:
+#     - id: images/bootfat
 type: package
 scripts:
   build: scripts/build.sh

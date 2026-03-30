@@ -1,3 +1,14 @@
+# Example (build definition pack entry):
+#   packs:
+#     - id: firmware/stm32-build
+#       config:
+#         src: git+https://github.com/embeddedci-com/examples.git//selftest-stm32?ref=main
+#         build_system: make
+#         cmd: make -j$(nproc)
+#         artifact_elf: build/selftest.elf
+#         artifact_bin: build/selftest.bin
+#         artifact_hex: build/selftest.hex
+#         toolchain: arm-none-eabi
 type: firmware
 image: ghcr.io/embeddedci-com/ubuntu-embedded-build-arm-toolchain:latest
 scripts:

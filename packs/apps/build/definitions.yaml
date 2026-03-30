@@ -1,3 +1,9 @@
+# Example (build definition pack entry):
+#   packs:
+#     - id: apps/build
+#       config:
+#         cmd: make
+#         artifact: selftest
 type: app
 scripts:
   build: scripts/build.sh

@@ -1,3 +1,8 @@
+# Example (build definition pack entry):
+#   packs:
+#     - id: test/qemu
+#       config:
+#         boot_success_pattern: "Linux embedded-ci-1 6.12.0-dirty"
 type: test
 scripts:
   run: scripts/run.sh

@@ -1,3 +1,15 @@
+# Example (build definition pack entry):
+#   packs:
+#     - id: system/rootfs-image
+#       config:
+#         artifact: selftest
+#         app_dst: /usr/bin/selftest
+#         size_mb: "64"
+#         hostname: embedded-ci-1
+#         console_login: enabled
+#         rootfs_user: embeddedci
+#         rootfs_password: embeddedci
+#         rootfs_root_password: embeddedci
 type: rootfs-image
 scripts:
   build: scripts/build.sh

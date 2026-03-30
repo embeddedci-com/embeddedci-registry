@@ -1,3 +1,18 @@
+# Example (build definition pack entry):
+#   packs:
+#     - id: system/buildroot-rootfs
+#       config:
+#         source: git+https://github.com/embeddedci-com/examples.git//buildroot-external/generic-rootfs?ref=main
+#         defconfig: arm_defconfig
+#         app_artifacts:
+#           - artifact: selftest
+#             dst: /usr/bin/selftest
+#             mode: "0755"
+#         overlays:
+#           - board/generic-rootfs/overlays/common
+#           - board/generic-rootfs/overlays/debug
+#         outputs:
+#           - ext4
 type: rootfs
 
 config:
