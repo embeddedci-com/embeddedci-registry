@@ -15,7 +15,7 @@ dependencies:
 
 artifacts:
   - path: sdcard.img
-    path_var: sdcard_img_name
+    name: "{{sdcard_img_name}}"
 
 skip:
   check_paths:

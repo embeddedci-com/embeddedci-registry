@@ -17,8 +17,7 @@ dependencies:
     optional: true
 
 artifacts:
-  - path_var: "out/app-build/{{artifact}}"
-    name: "{{artifact}}"
+  - path: "out/app-build/{{artifact}}"
 
 config:
   cmd: "{{cmd}}"
