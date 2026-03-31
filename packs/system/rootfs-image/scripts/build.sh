@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build rootfs.ext4 using BusyBox + optional app artifact.
+# Build rootfs.ext4 using BusyBox + optional app artifacts.
 #
 # Required env:
 #   BUILD_ROOT (not strictly used, but kept for consistency)
@@ -10,7 +10,8 @@
 #   BOARD_BUSYBOX_STATIC    "true"/"false"/"1"/"0" (defaults to true if unset)
 #
 # Pack vars env (from yaml vars):
-#   BUSYBOX_REF, SIZE_MB, HOSTNAME, CONSOLE_LOGIN, APP_BIN, APP_DST (install path in rootfs), LABEL, IMG, ROOTDIR
+#   BUSYBOX_REF, SIZE_MB, HOSTNAME, CONSOLE_LOGIN, APP_DST (JSON array of {name,path}), LABEL, IMG, ROOTDIR
+#   PACK_ARTIFACTS_JSON (JSON array of resolved artifact metadata: name/path/source_path/optional)
 #   ROOTFS_USER, ROOTFS_PASSWORD (non-root user; empty = no non-root user, only root)
 #   ROOTFS_ROOT_PASSWORD (root password; empty = root account locked)
 #
@@ -58,9 +59,10 @@ LABEL="${LABEL:-rootfs}"
 HOSTNAME="${HOSTNAME:-embedded-ci}"
 CONSOLE_LOGIN="${CONSOLE_LOGIN:-disabled}"
 
-APP_BIN="${APP_BIN:-}"
-# APP_DST = where to install the app binary inside the rootfs (e.g. /usr/bin/selftest)
-APP_DST="${APP_DST:-/usr/bin/selftest}"
+# APP_DST is a JSON array of objects:
+#   [{"name":"selftest","path":"/usr/bin/selftest"}]
+APP_DST="${APP_DST:-[]}"
+PACK_ARTIFACTS_JSON="${PACK_ARTIFACTS_JSON:-[]}"
 
 BOARD_CC="${BOARD_CC:-}"
 if [[ -z "${BOARD_CC}" ]]; then
@@ -81,6 +83,7 @@ need make
 need mkfs.ext4
 need sed
 need truncate
+need jq
 need "${BOARD_CC}"
 
 # Determine target triple + sysroot from compiler
@@ -298,14 +301,57 @@ if [[ "${BUSYBOX_STATIC}" == "0" ]]; then
   fi
 fi
 
-# Add app binary
-if [[ -n "${APP_BIN}" && -f "${APP_BIN}" ]]; then
-  echo "[*] Adding app binary into rootfs: ${APP_BIN} -> ${APP_DST}"
-  DST="${ROOTDIR}/${APP_DST#/}"
-  mkdir -p "$(dirname "${DST}")"
-  cp -v "${APP_BIN}" "${DST}"
-  chmod 755 "${DST}"
+# Add app binaries from PACK_ARTIFACTS_JSON (name -> source_path/path)
+artifact_source_for_name() {
+  local name="$1"
+  local src
+  src="$(jq -r --arg n "${name}" 'map(select(type == "object" and .name == $n) | (.source_path // .path // "")) | .[0] // ""' <<< "${PACK_ARTIFACTS_JSON}")"
+  [[ -z "${src}" ]] && return 1
+  if [[ "${src}" = /* ]]; then
+    echo "${src}"
+  elif [[ -n "${BUILD_ROOT:-}" ]]; then
+    echo "${BUILD_ROOT%/}/${src#/}"
+  else
+    echo "${src}"
+  fi
+}
+
+copy_app_binary() {
+  local src="$1"
+  local dst_rel="$2"
+  local dst="${ROOTDIR}/${dst_rel#/}"
+  mkdir -p "$(dirname "${dst}")"
+  cp -v "${src}" "${dst}"
+  chmod 755 "${dst}"
+}
+
+if ! jq -e 'type == "array"' <<<"${APP_DST}" >/dev/null 2>&1; then
+  echo "ERROR: APP_DST must be a JSON array of {name,path} objects"
+  exit 1
 fi
+
+if ! jq -e 'type == "array"' <<<"${PACK_ARTIFACTS_JSON}" >/dev/null 2>&1; then
+  echo "ERROR: PACK_ARTIFACTS_JSON must be a JSON array"
+  exit 1
+fi
+
+while IFS=$'\t' read -r app_name app_path; do
+  [[ -z "${app_name}" || -z "${app_path}" ]] && {
+    echo "ERROR: APP_DST entries must include non-empty name and path"
+    exit 1
+  }
+  app_src="$(artifact_source_for_name "${app_name}" || true)"
+  if [[ -z "${app_src}" ]]; then
+    echo "ERROR: app artifact '${app_name}' not found in PACK_ARTIFACTS_JSON"
+    exit 1
+  fi
+  if [[ ! -f "${app_src}" ]]; then
+    echo "ERROR: app artifact source file not found for '${app_name}': ${app_src}"
+    exit 1
+  fi
+  echo "[*] Adding app binary into rootfs: ${app_src} -> ${app_path}"
+  copy_app_binary "${app_src}" "${app_path}"
+done < <(jq -r '.[] | select(type == "object") | [(.name // ""), (.path // "")] | @tsv' <<< "${APP_DST}")
 
 # Hostname
 echo "${HOSTNAME}" > "${ROOTDIR}/etc/hostname"

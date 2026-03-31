@@ -1,9 +1,17 @@
-# Example (build definition pack entry):
+# Example (build definition pack entries):
 #   packs:
+#     - id: apps/build
+#       config:
+#         cmd: make
+#         src: git+https://github.com/embeddedci-com/examples.git//selftest?ref=main
+#       artifacts:
+#         - path: selftest
+#           name: selftest
 #     - id: system/rootfs-image
 #       config:
-#         artifact: selftest
-#         app_dst: /usr/bin/selftest
+#         app_dst:
+#           - name: selftest  # must match the apps/build artifact name
+#             path: /usr/bin/selftest
 #         size_mb: "64"
 #         hostname: embedded-ci-1
 #         console_login: enabled
@@ -46,5 +54,4 @@ config:
   rootfs_password: "{{rootfs_password}}"
   rootfs_root_password: "{{rootfs_root_password}}"
   rootdir: "{{build_root}}/rootfs"
-  app_bin: "{{build_root}}/out/app-build/{{artifact}}"
   busybox_src: "{{build_root}}/busybox_src"
