@@ -12,6 +12,7 @@ default_vars: {}
 
 dependencies:
   - pack: fetch
+    name: "src"
     src: "{{src}}"
     optional: true
 

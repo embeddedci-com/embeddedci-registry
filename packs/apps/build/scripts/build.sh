@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# Build an application. Runs CMD in a writable copy of SRC
-# PROJECT is mounted read-only, so we copy SRC to BUILD_ROOT and build there.
-# Env: BUILD_ROOT, PROJECT_ROOT, CMD, SRC (optional)
+# Build an application. Runs CMD from dependency staging destination.
+# Env: BUILD_ROOT, PROJECT_ROOT, CMD, PACK_DEPENDENCIES_JSON
 # Board (target) env from boards/{target}/definitions.yaml:
 #   Go:   BOARD_ARCH, BOARD_GO_OS, BOARD_GO_ARCH → GOOS, GOARCH
 #   C:    BOARD_CC, BOARD_CROSS_COMPILE, BOARD_AR → CC, CROSS_COMPILE, AR
@@ -27,33 +26,33 @@ need arm-linux-musleabihf-gcc
 : "${BUILD_ROOT:?BUILD_ROOT required}"
 : "${PROJECT_ROOT:?PROJECT_ROOT required}"
 : "${CMD:?CMD required}"
+: "${PACK_DEPENDENCIES_JSON:?PACK_DEPENDENCIES_JSON required}"
 
-# Resolve source:
-# - SRC set: relative to PROJECT_ROOT or absolute path
-# - SRC empty: source/archive is already extracted in BUILD_ROOT
-if [[ -n "${SRC:-}" ]]; then
-  if [[ "${SRC}" == /* ]]; then
-    APP_SRC="${SRC}"
-  else
-    APP_SRC="${PROJECT_ROOT}/${SRC}"
-  fi
-else
-  APP_SRC="${BUILD_ROOT}"
-fi
+need jq
 
-if [[ ! -d "${APP_SRC}" ]]; then
-  echo "App source not found: ${APP_SRC}"
+# Pick the source dependency destination:
+# - prefer dependency named "src"
+# - otherwise use the first dependency with a non-empty dest
+APP_DEST="$(jq -r '
+  (map(select((.name // "") == "src" and (.dest // "") != "")) | .[0].dest) //
+  (map(select((.dest // "") != "")) | .[0].dest) //
+  empty
+' <<< "${PACK_DEPENDENCIES_JSON}")"
+
+if [[ -z "${APP_DEST}" || "${APP_DEST}" == "null" ]]; then
+  echo "Could not determine app source from PACK_DEPENDENCIES_JSON (missing dependency dest)"
   exit 1
 fi
 
-# Copy source to writable area when source is outside BUILD_ROOT.
-if [[ "${APP_SRC}" == "${BUILD_ROOT}" ]]; then
-  BUILD_SRC="${BUILD_ROOT}"
+if [[ "${APP_DEST}" == /* ]]; then
+  BUILD_SRC="${APP_DEST}"
 else
-  BUILD_SRC="${BUILD_ROOT}/app-src"
-  rm -rf "${BUILD_SRC}"
-  mkdir -p "${BUILD_SRC}"
-  cp -a "${APP_SRC}/." "${BUILD_SRC}/"
+  BUILD_SRC="${BUILD_ROOT}/${APP_DEST}"
+fi
+
+if [[ ! -d "${BUILD_SRC}" ]]; then
+  echo "App source not found at dependency destination: ${BUILD_SRC}"
+  exit 1
 fi
 
 cd "${BUILD_SRC}"
@@ -125,3 +124,4 @@ if [[ -n "${RUST_TARGET:-}" ]]; then
 fi
 
 eval "${CMD}"
+echo "Build path: ${BUILD_SRC}"
