@@ -2,9 +2,6 @@
 
 set -eu
 
-PATH=/sbin:/bin:/usr/sbin:/usr/bin
-export PATH
-
 log()  { echo "[init] $*"; }
 warn() { echo "[init] WARN: $*" >&2; }
 die()  { echo "[init] ERROR: $*" >&2; emergency_shell; }

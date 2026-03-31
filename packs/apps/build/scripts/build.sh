@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Build an application. Runs CMD in a writable copy of SRC; artifact is the produced binary.
+# Build an application. Runs CMD in a writable copy of SRC
 # PROJECT is mounted read-only, so we copy SRC to BUILD_ROOT and build there.
-# Env: BUILD_ROOT, PROJECT_ROOT, CMD, SRC (optional), ARTIFACT
+# Env: BUILD_ROOT, PROJECT_ROOT, CMD, SRC (optional)
 # Board (target) env from boards/{target}/definitions.yaml:
 #   Go:   BOARD_ARCH, BOARD_GO_OS, BOARD_GO_ARCH → GOOS, GOARCH
 #   C:    BOARD_CC, BOARD_CROSS_COMPILE, BOARD_AR → CC, CROSS_COMPILE, AR
@@ -11,10 +11,22 @@
 
 set -e
 
+need() { command -v "$1" >/dev/null 2>&1 || { echo "Missing '$1' in PATH"; exit 1; }; }
+
+ensure_path_entry() {
+  case ":${PATH}:" in
+    *":$1:"*) ;;
+    *) export PATH="${PATH}:$1" ;;
+  esac
+}
+
+ensure_path_entry "/opt/toolchains/aarch64-linux-musl/bin"
+ensure_path_entry "/opt/toolchains/arm-linux-musleabihf/bin"
+need arm-linux-musleabihf-gcc
+
 : "${BUILD_ROOT:?BUILD_ROOT required}"
 : "${PROJECT_ROOT:?PROJECT_ROOT required}"
 : "${CMD:?CMD required}"
-: "${ARTIFACT:?ARTIFACT required}"
 
 # Resolve source:
 # - SRC set: relative to PROJECT_ROOT or absolute path
@@ -113,13 +125,3 @@ if [[ -n "${RUST_TARGET:-}" ]]; then
 fi
 
 eval "${CMD}"
-
-if [[ ! -f "${BUILD_SRC}/${ARTIFACT}" ]]; then
-  echo "Build did not produce ${ARTIFACT} in ${BUILD_SRC}"
-  exit 1
-fi
-
-# Copy artifact to out dir for engine / rootfs-image pack
-OUT_DIR="${BUILD_ROOT}/out/app-build"
-mkdir -p "${OUT_DIR}"
-cp -v "${BUILD_SRC}/${ARTIFACT}" "${OUT_DIR}/${ARTIFACT}"

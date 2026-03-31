@@ -3,7 +3,7 @@
 #     - id: apps/build
 #       config:
 #         cmd: make
-#         artifact: selftest
+#       artifact: selftest
 type: app
 scripts:
   build: scripts/build.sh
@@ -12,16 +12,9 @@ default_vars: {}
 
 dependencies:
   - pack: fetch
-    dest: "{{artifact}}"
     src: "{{src}}"
     optional: true
-
-artifacts:
-  - path: "out/app-build/{{artifact}}"
 
 config:
   cmd: "{{cmd}}"
   src: "{{src}}"
-  artifact: "{{artifact}}"
-  out: "{{out}}"
-  dst: "{{dst}}"
