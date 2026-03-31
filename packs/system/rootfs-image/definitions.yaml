@@ -15,7 +15,7 @@ scripts:
   build: scripts/build.sh
 
 default_vars:
-  BUSYBOX_REF: "1_36_1"
+  busybox_ref: "1_36_1"
   busybox_repo: https://github.com/embeddedci-com/busybox-mirror
   rootfs_user: ""           # empty = no non-root user; set e.g. embeddedci to create one
   rootfs_password: ""      # password for non-root user (used only if rootfs_user set)
@@ -24,9 +24,8 @@ default_vars:
 dependencies:
   - pack: fetch
     dest: busybox_src
-    src: "{{busybox_repo}}"
-  - name: app_bin
-    pack: apps/build
+    src: "{{busybox_repo}}?ref={{busybox_ref}}"
+  - pack: apps/build
     dest: "out/app-build/{{artifact}}"
 
 artifacts:
@@ -37,7 +36,6 @@ skip:
     - rootfs.ext4
 
 config:
-  artifact: "{{artifact}}"
   app_dst: "{{app_dst}}"
   img: "rootfs.ext4"
   size_mb: "{{size_mb}}"
