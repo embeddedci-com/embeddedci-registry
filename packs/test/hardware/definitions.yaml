@@ -1,25 +1,28 @@
 # Example (build definition pack entry):
-#   packs:
-#     - id: test/hardware
-#       config:
-#         device_type: beagleboard-black
-#         boot_success_pattern: "Linux embedded-ci-1 6.12.0-dirty"
-#         # device_type: nucleo-f446re
-#         # boot_success_pattern: "SELFTEST PASS"
+#   builds:
+#     my-build:
+#       targets:
+#         - id: beagleboard-black-c3   # sent as device_type on agent device claim
+#       packs:
+#         - id: test/hardware
+#           config:
+#             boot_success_pattern: "Linux embedded-ci-1 6.12.0-dirty"
+# Optional: override the claim string when it must differ from targets[].id:
+#           config:
+#             device_type: other-pool-name
 #
 # Boot order (netboot vs firmware) comes from POST /agent/device/claim (boot_method), not from YAML.
 type: test
 scripts: {}
 
 test_config:
+  claim_device: true
   boot_success_pattern: ""
 
 default_vars:
   lease_minutes: "30"
-  device_type: ""
 
 config:
-  device_type: "{{device_type}}"
   lease_minutes: "{{lease_minutes}}"
   boot_success_pattern: "{{boot_success_pattern}}"
 
