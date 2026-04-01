@@ -2,10 +2,12 @@
 #   packs:
 #     - id: test/hardware
 #       config:
-#         platform: beagleboard-black
+#         device_type: beagleboard-black
 #         boot_success_pattern: "Linux embedded-ci-1 6.12.0-dirty"
-#         # platform: nucleo-f446re
+#         # device_type: nucleo-f446re
 #         # boot_success_pattern: "SELFTEST PASS"
+#
+# Boot order (netboot vs firmware) comes from POST /agent/device/claim (boot_method), not from YAML.
 type: test
 scripts: {}
 
@@ -14,9 +16,10 @@ test_config:
 
 default_vars:
   lease_minutes: "30"
+  device_type: ""
 
 config:
-  platform: "{{platform}}"
+  device_type: "{{device_type}}"
   lease_minutes: "{{lease_minutes}}"
   boot_success_pattern: "{{boot_success_pattern}}"
 
