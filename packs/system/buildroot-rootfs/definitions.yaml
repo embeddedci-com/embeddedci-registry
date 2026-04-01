@@ -46,6 +46,7 @@ dependencies:
     src: "{{source}}"
   - pack: apps/build
     dest: "out/app-build/{{artifact}}"
+    name: "*"
     optional: true
 
 artifacts:

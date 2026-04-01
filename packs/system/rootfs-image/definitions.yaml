@@ -10,7 +10,7 @@
 #     - id: system/rootfs-image
 #       config:
 #         app_dst:
-#           - name: selftest  # must match the apps/build artifact name
+#           - name: selftest  # must match PACK_DEPENDENCIES_JSON artifact_name (or non-* dependency name)
 #             path: /usr/bin/selftest
 #         size_mb: "64"
 #         hostname: embedded-ci-1
@@ -34,7 +34,7 @@ dependencies:
     dest: busybox_src
     src: "{{busybox_repo}}?ref={{busybox_ref}}"
   - pack: apps/build
-    dest: "out/app-build/{{artifact}}"
+    name: "*"
 
 artifacts:
   - path: rootfs.ext4

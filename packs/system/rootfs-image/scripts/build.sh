@@ -2,16 +2,17 @@
 # Build rootfs.ext4 using BusyBox + optional app artifacts.
 #
 # Required env:
-#   BUILD_ROOT (not strictly used, but kept for consistency)
+#   BUILD_ROOT (resolves PACK_DEPENDENCIES_JSON dest paths)
 #   BUSYBOX_SRC  (path to busybox source)
+#   PACK_DEPENDENCIES_JSON (resolved dependencies; app binaries matched for APP_DST)
 #
 # Board env (provided by target -> prefixed + uppercased):
 #   BOARD_CC                e.g. aarch64-linux-musl-gcc | arm-linux-musleabihf-gcc
 #   BOARD_BUSYBOX_STATIC    "true"/"false"/"1"/"0" (defaults to true if unset)
 #
 # Pack vars env (from yaml vars):
-#   BUSYBOX_REF, SIZE_MB, HOSTNAME, CONSOLE_LOGIN, APP_DST (JSON array of {name,path}), LABEL, IMG, ROOTDIR
-#   PACK_ARTIFACTS_JSON (JSON array of resolved artifact metadata: name/path/source_path/optional)
+#   BUILD_ROOT, BUSYBOX_REF, SIZE_MB, HOSTNAME, CONSOLE_LOGIN, APP_DST (JSON array of {name,path}), LABEL, IMG, ROOTDIR
+#   PACK_DEPENDENCIES_JSON (JSON array: match APP_DST.name to artifact_name / dependency name; staged file via dest)
 #   ROOTFS_USER, ROOTFS_PASSWORD (non-root user; empty = no non-root user, only root)
 #   ROOTFS_ROOT_PASSWORD (root password; empty = root account locked)
 #
@@ -56,7 +57,9 @@ truthy() {
 }
 
 # ===== Config =====
+: "${BUILD_ROOT:?BUILD_ROOT required}"
 : "${BUSYBOX_SRC:?BUSYBOX_SRC required}"
+: "${PACK_DEPENDENCIES_JSON:?PACK_DEPENDENCIES_JSON required}"
 
 ROOTDIR="${ROOTDIR:-_rootfs}"
 IMG="${IMG:-rootfs.ext4}"
@@ -69,7 +72,6 @@ CONSOLE_LOGIN="${CONSOLE_LOGIN:-disabled}"
 # APP_DST is a JSON array of objects:
 #   [{"name":"selftest","path":"/usr/bin/selftest"}]
 APP_DST="${APP_DST:-[]}"
-PACK_ARTIFACTS_JSON="${PACK_ARTIFACTS_JSON:-[]}"
 
 BOARD_CC="${BOARD_CC:-}"
 if [[ -z "${BOARD_CC}" ]]; then
@@ -312,18 +314,25 @@ if [[ "${BUSYBOX_STATIC}" == "0" ]]; then
   fi
 fi
 
-# Add app binaries from PACK_ARTIFACTS_JSON (name -> source_path/path)
-artifact_source_for_name() {
+# Add app binaries from PACK_DEPENDENCIES_JSON: APP_DST.name matches artifact_name (or non-* dependency name), file at dest under BUILD_ROOT.
+dependency_staged_path_for_app_name() {
   local name="$1"
-  local src
-  src="$(jq -r --arg n "${name}" 'map(select(type == "object" and .name == $n) | (.source_path // .path // "")) | .[0] // ""' <<< "${PACK_ARTIFACTS_JSON}")"
-  [[ -z "${src}" ]] && return 1
-  if [[ "${src}" = /* ]]; then
-    echo "${src}"
-  elif [[ -n "${BUILD_ROOT:-}" ]]; then
-    echo "${BUILD_ROOT%/}/${src#/}"
+  local dest
+  dest="$(jq -r --arg n "${name}" '
+    map(select(
+      type == "object" and
+      (.pack // "") != "fetch" and
+      (
+        (.artifact_name // "") == $n or
+        ((.name // "") != "*" and (.name // "") == $n)
+      )
+    )) | .[0].dest // empty
+  ' <<< "${PACK_DEPENDENCIES_JSON}")"
+  [[ -z "${dest}" || "${dest}" == "null" ]] && return 1
+  if [[ "${dest}" = /* ]]; then
+    echo "${dest}"
   else
-    echo "${src}"
+    echo "${BUILD_ROOT%/}/${dest#/}"
   fi
 }
 
@@ -341,8 +350,8 @@ if ! jq -e 'type == "array"' <<<"${APP_DST}" >/dev/null 2>&1; then
   exit 1
 fi
 
-if ! jq -e 'type == "array"' <<<"${PACK_ARTIFACTS_JSON}" >/dev/null 2>&1; then
-  echo "ERROR: PACK_ARTIFACTS_JSON must be a JSON array"
+if ! jq -e 'type == "array"' <<<"${PACK_DEPENDENCIES_JSON}" >/dev/null 2>&1; then
+  echo "ERROR: PACK_DEPENDENCIES_JSON must be a JSON array"
   exit 1
 fi
 
@@ -351,9 +360,9 @@ while IFS=$'\t' read -r app_name app_path; do
     echo "ERROR: APP_DST entries must include non-empty name and path"
     exit 1
   }
-  app_src="$(artifact_source_for_name "${app_name}" || true)"
+  app_src="$(dependency_staged_path_for_app_name "${app_name}" || true)"
   if [[ -z "${app_src}" ]]; then
-    echo "ERROR: app artifact '${app_name}' not found in PACK_ARTIFACTS_JSON"
+    echo "ERROR: app artifact '${app_name}' not found in PACK_DEPENDENCIES_JSON (match artifact_name or dependency name)"
     exit 1
   fi
   if [[ ! -f "${app_src}" ]]; then
