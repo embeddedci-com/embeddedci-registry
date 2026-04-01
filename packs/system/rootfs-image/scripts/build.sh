@@ -114,7 +114,7 @@ need "${BOARD_STRIP}"
 if [[ "$(id -u)" -ne 0 && -z "${FAKEROOTKEY:-}" ]]; then
   need fakeroot
   echo "[*] Re-executing under fakeroot for rootfs ownership metadata..."
-  exec fakeroot -- "$0" "$@"
+  exec fakeroot -- /usr/bin/env bash "$0" "$@"
 fi
 
 echo "[*] Board toolchain:"
