@@ -34,6 +34,7 @@ dependencies:
     dest: busybox_src
     src: "{{busybox_repo}}?ref={{busybox_ref}}"
   - pack: apps/build
+    dest: "out/app-build/"
     name: "*"
 
 artifacts:

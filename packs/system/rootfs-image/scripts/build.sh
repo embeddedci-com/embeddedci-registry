@@ -12,7 +12,7 @@
 #
 # Pack vars env (from yaml vars):
 #   BUILD_ROOT, BUSYBOX_REF, SIZE_MB, HOSTNAME, CONSOLE_LOGIN, APP_DST (JSON array of {name,path}), LABEL, IMG, ROOTDIR
-#   PACK_DEPENDENCIES_JSON (JSON array: match APP_DST.name to artifact_name / dependency name; staged file via dest)
+#   PACK_DEPENDENCIES_JSON (JSON array: match APP_DST.name to artifact_name or dest basename; staged file via dest)
 #   ROOTFS_USER, ROOTFS_PASSWORD (non-root user; empty = no non-root user, only root)
 #   ROOTFS_ROOT_PASSWORD (root password; empty = root account locked)
 #
@@ -314,7 +314,10 @@ if [[ "${BUSYBOX_STATIC}" == "0" ]]; then
   fi
 fi
 
-# Add app binaries from PACK_DEPENDENCIES_JSON: APP_DST.name matches artifact_name (or non-* dependency name), file at dest under BUILD_ROOT.
+# Add app binaries from PACK_DEPENDENCIES_JSON.
+# Match APP_DST.name by:
+# 1) artifact_name (preferred),
+# 2) basename(dest) for dependencies using dest templates like out/app-build/{{artifact}}.
 dependency_staged_path_for_app_name() {
   local name="$1"
   local dest
@@ -324,7 +327,7 @@ dependency_staged_path_for_app_name() {
       (.pack // "") != "fetch" and
       (
         (.artifact_name // "") == $n or
-        ((.name // "") != "*" and (.name // "") == $n)
+        (((.dest // "") | split("/") | last) == $n)
       )
     )) | .[0].dest // empty
   ' <<< "${PACK_DEPENDENCIES_JSON}")"
@@ -362,7 +365,7 @@ while IFS=$'\t' read -r app_name app_path; do
   }
   app_src="$(dependency_staged_path_for_app_name "${app_name}" || true)"
   if [[ -z "${app_src}" ]]; then
-    echo "ERROR: app artifact '${app_name}' not found in PACK_DEPENDENCIES_JSON (match artifact_name or dependency name)"
+    echo "ERROR: app artifact '${app_name}' not found in PACK_DEPENDENCIES_JSON (match artifact_name or dest basename)"
     exit 1
   fi
   if [[ ! -f "${app_src}" ]]; then
