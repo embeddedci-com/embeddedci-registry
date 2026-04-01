@@ -22,6 +22,13 @@ set -euo pipefail
 
 need() { command -v "$1" >/dev/null 2>&1 || { echo "Missing '$1'"; exit 1; }; }
 
+ensure_path_entry() {
+  case ":${PATH}:" in
+    *":$1:"*) ;;
+    *) export PATH="${PATH}:$1" ;;
+  esac
+}
+
 safe_chown() {
   local owner="$1"
   shift
@@ -77,6 +84,10 @@ if truthy "${BOARD_BUSYBOX_STATIC_RAW}"; then
 else
   BUSYBOX_STATIC=0
 fi
+
+# ensure correct PATH
+ensure_path_entry "/opt/toolchains/aarch64-linux-musl/bin"
+ensure_path_entry "/opt/toolchains/arm-linux-musleabihf/bin"
 
 echo "[*] Checking tools..."
 need make
