@@ -1,0 +1,48 @@
+# Example (build definition pack entry):
+#   packs:
+#     - id: firmware/pico-build
+#       config:
+#         src: git+https://github.com/raspberrypi/pico-examples.git//blink?ref=master
+#         build_system: cmake
+#         artifact_elf: build/blink.elf
+#         artifact_bin: build/blink.bin
+#         artifact_hex: build/blink.hex
+#         toolchain: arm-none-eabi
+type: firmware
+image: ghcr.io/embeddedci-com/ubuntu-embedded-build-arm-toolchain:latest
+scripts:
+  build: scripts/build.sh
+
+default_vars:
+  pico_sdk_src: https://github.com/raspberrypi/pico-sdk.git
+  pico_sdk_ref: 2.2.0
+  build_system: cmake
+  toolchain: arm-none-eabi
+
+dependencies:
+  - pack: fetch
+    dest: build_src
+    src: "{{src}}"
+    optional: true
+  - pack: fetch
+    dest: pico-sdk
+    src: "{{pico_sdk_src}}?ref={{pico_sdk_ref}}"
+
+artifacts:
+  - path: "out/pico-build/{{artifact_elf}}"
+    name: "{{artifact_elf}}"
+  - path: "out/pico-build/{{artifact_bin}}"
+    name: "{{artifact_bin}}"
+  - path: "out/pico-build/{{artifact_hex}}"
+    name: "{{artifact_hex}}"
+
+config:
+  src: "{{src}}"
+  src_dir: "{{build_root}}/build_src"
+  pico_sdk_dir: "{{build_root}}/pico-sdk"
+  build_system: "{{build_system}}"
+  cmd: "{{cmd}}"
+  artifact_elf: "{{artifact_elf}}"
+  artifact_bin: "{{artifact_bin}}"
+  artifact_hex: "{{artifact_hex}}"
+  toolchain: "{{toolchain}}"
