@@ -46,6 +46,8 @@ else
 fi
 cd "${BUILD_SRC}"
 
+unset CC CXX AR AS LD
+
 # Optional: common GNU Arm Embedded names for non-CMake builds (CMake+pico-sdk sets the toolchain itself).
 if [[ -n "${TOOLCHAIN:-}" && "${BUILD_SYSTEM:-cmake}" != "cmake" ]]; then
   export CROSS_COMPILE="${TOOLCHAIN}-"
