@@ -1,0 +1,28 @@
+type: pin_map
+version: 1
+id: nucleo-f446re-default-v3
+layout_ref: nucleo-f446re-harness-v1
+
+mappings:
+  - protocol: i2c
+    backend: force_hw
+    lines:
+      scl: PB8
+      sda: PB9
+    config:
+      frequency_hz: 400000
+
+  - protocol: uart
+    backend: force_hw
+    lines:
+      tx: PA2
+      rx: PA3
+    config:
+      baud_rate: 115200
+
+  - protocol: gpio
+    backend: force_hw
+    lines:
+      line: PC10
+    config:
+      direction: input
