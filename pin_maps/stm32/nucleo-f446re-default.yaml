@@ -2,6 +2,7 @@ type: pin_map
 version: 1
 id: nucleo-f446re-default
 name: NUCLEO-F446RE pin map
+pin_layout: nucleo-f446re-harness # id of the pin layout to use for this pin map
 targets:
   - id: nucleo-f446re
 
