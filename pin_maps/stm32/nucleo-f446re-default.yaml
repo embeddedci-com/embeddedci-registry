@@ -1,7 +1,9 @@
 type: pin_map
 version: 1
-id: nucleo-f446re-default-v3
-layout_ref: nucleo-f446re-harness-v1
+id: nucleo-f446re-default
+name: NUCLEO-F446RE pin map
+targets:
+  - id: nucleo-f446re
 
 mappings:
   - protocol: i2c

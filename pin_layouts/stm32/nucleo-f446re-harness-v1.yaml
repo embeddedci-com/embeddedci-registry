@@ -1,17 +1,13 @@
 type: pin_layout
 version: 1
-id: nucleo-f446re-harness-v1
-name: NUCLEO-F446RE Harness v1
-harness_version: 1
+id: nucleo-f446re-harness
+name: NUCLEO-F446RE Harness
 description: >
   Physical DUT-to-adapter harness mapping for NUCLEO-F446RE.
   MCU pin names (e.g. PB9, PA2) serve as canonical identifiers
   linking this layout to pin maps.
-
-board:
-  vendor: STMicroelectronics
-  model: NUCLEO-F446RE
-  mcu: STM32F446RE
+targets:
+  - id: nucleo-f446re
 
 signals:
   - pin: PB9
