@@ -24,8 +24,7 @@ mappings:
       baud_rate: 115200
 
   - protocol: gpio
-    backend: force_hw
     lines:
-      line: PC10
+      io: PC10
     config:
       direction: input
