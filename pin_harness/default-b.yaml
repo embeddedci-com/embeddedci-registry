@@ -3,293 +3,341 @@ version: 1
 id: default-b
 name: Default harness B
 description: >
-  QFN-80 package ball to logical hw_functions (I2C/UART/SPI/GPIO roles).
-  connector_pin is the QFN-80 pin number; GPIO index is gpio0..gpio47 for GPIO0..GPIO47.
+  QFN-80 package: each pin has connector_pin (ball number), gpio (GPIO0..GPIO47 index),
+  and hw_functions (I2C/UART/SPI/GPIO role tags).
 
 pins:
   - connector_pin: 1
+    gpio: 4
     hw_functions:
       - i2c_0_sda
       - uart_1_tx
       - spi_0_rx
       - gpio4
   - connector_pin: 2
+    gpio: 5
     hw_functions:
       - i2c_0_scl
       - uart_1_rx
       - spi_0_csn
       - gpio5
   - connector_pin: 3
+    gpio: 6
     hw_functions:
       - i2c_1_sda
       - uart_1_cts
       - spi_0_sck
       - gpio6
   - connector_pin: 4
+    gpio: 7
     hw_functions:
       - i2c_1_scl
       - uart_1_rts
       - spi_0_tx
       - gpio7
   - connector_pin: 6
+    gpio: 8
     hw_functions:
       - i2c_0_sda
       - uart_1_tx
       - spi_1_rx
       - gpio8
   - connector_pin: 7
+    gpio: 9
     hw_functions:
       - i2c_0_scl
       - uart_1_rx
       - spi_1_csn
       - gpio9
   - connector_pin: 8
+    gpio: 10
     hw_functions:
       - i2c_1_sda
       - uart_1_cts
       - spi_1_sck
       - gpio10
   - connector_pin: 9
+    gpio: 11
     hw_functions:
       - i2c_1_scl
       - uart_1_rts
       - spi_1_tx
       - gpio11
   - connector_pin: 11
+    gpio: 12
     hw_functions:
       - i2c_0_sda
       - uart_0_tx
       - spi_1_rx
       - gpio12
   - connector_pin: 12
+    gpio: 13
     hw_functions:
       - i2c_0_scl
       - uart_0_rx
       - spi_1_csn
       - gpio13
   - connector_pin: 13
+    gpio: 14
     hw_functions:
       - i2c_1_sda
       - uart_0_cts
       - spi_1_sck
       - gpio14
   - connector_pin: 14
+    gpio: 15
     hw_functions:
       - i2c_1_scl
       - uart_0_rts
       - spi_1_tx
       - gpio15
   - connector_pin: 16
+    gpio: 16
     hw_functions:
       - i2c_0_sda
       - uart_0_tx
       - spi_0_rx
       - gpio16
   - connector_pin: 17
+    gpio: 17
     hw_functions:
       - i2c_0_scl
       - uart_0_rx
       - spi_0_csn
       - gpio17
   - connector_pin: 18
+    gpio: 18
     hw_functions:
       - i2c_1_sda
       - uart_0_cts
       - spi_0_sck
       - gpio18
   - connector_pin: 19
+    gpio: 19
     hw_functions:
       - i2c_1_scl
       - uart_0_rts
       - spi_0_tx
       - gpio19
   - connector_pin: 20
+    gpio: 20
     hw_functions:
       - i2c_0_sda
       - uart_1_tx
       - spi_0_rx
       - gpio20
   - connector_pin: 21
+    gpio: 21
     hw_functions:
       - i2c_0_scl
       - uart_1_rx
       - spi_0_csn
       - gpio21
   - connector_pin: 22
+    gpio: 22
     hw_functions:
       - i2c_1_sda
       - uart_1_cts
       - spi_0_sck
       - gpio22
   - connector_pin: 23
+    gpio: 23
     hw_functions:
       - i2c_1_scl
       - uart_1_rts
       - spi_0_tx
       - gpio23
   - connector_pin: 25
+    gpio: 24
     hw_functions:
       - i2c_0_sda
       - uart_1_tx
       - spi_1_rx
       - gpio24
   - connector_pin: 26
+    gpio: 25
     hw_functions:
       - i2c_0_scl
       - uart_1_rx
       - spi_1_csn
       - gpio25
   - connector_pin: 27
+    gpio: 26
     hw_functions:
       - i2c_1_sda
       - uart_1_cts
       - spi_1_sck
       - gpio26
   - connector_pin: 28
+    gpio: 27
     hw_functions:
       - i2c_1_scl
       - uart_1_rts
       - spi_1_tx
       - gpio27
   - connector_pin: 35
+    gpio: 28
     hw_functions:
       - i2c_0_sda
       - uart_0_tx
       - spi_1_rx
       - gpio28
   - connector_pin: 36
+    gpio: 29
     hw_functions:
       - i2c_0_scl
       - uart_0_rx
       - spi_1_csn
       - gpio29
   - connector_pin: 37
+    gpio: 30
     hw_functions:
       - i2c_1_sda
       - uart_0_cts
       - spi_1_sck
       - gpio30
   - connector_pin: 38
+    gpio: 31
     hw_functions:
       - i2c_1_scl
       - uart_0_rts
       - spi_1_tx
       - gpio31
   - connector_pin: 39
+    gpio: 32
     hw_functions:
       - i2c_0_sda
       - uart_0_tx
       - spi_0_rx
       - gpio32
   - connector_pin: 42
+    gpio: 33
     hw_functions:
       - i2c_0_scl
       - uart_0_rx
       - spi_0_csn
       - gpio33
   - connector_pin: 43
+    gpio: 34
     hw_functions:
       - i2c_1_sda
       - uart_0_cts
       - spi_0_sck
       - gpio34
   - connector_pin: 44
+    gpio: 35
     hw_functions:
       - i2c_1_scl
       - uart_0_rts
       - spi_0_tx
       - gpio35
   - connector_pin: 45
+    gpio: 36
     hw_functions:
       - i2c_0_sda
       - uart_1_tx
       - spi_0_rx
       - gpio36
   - connector_pin: 46
+    gpio: 37
     hw_functions:
       - i2c_0_scl
       - uart_1_rx
       - spi_0_csn
       - gpio37
   - connector_pin: 47
+    gpio: 38
     hw_functions:
       - i2c_1_sda
       - uart_1_cts
       - spi_0_sck
       - gpio38
   - connector_pin: 48
+    gpio: 39
     hw_functions:
       - i2c_1_scl
       - uart_1_rts
       - spi_0_tx
       - gpio39
   - connector_pin: 49
+    gpio: 40
     hw_functions:
       - i2c_0_sda
       - uart_1_tx
       - spi_1_rx
       - gpio40
   - connector_pin: 52
+    gpio: 41
     hw_functions:
       - i2c_0_scl
       - uart_1_rx
       - spi_1_csn
       - gpio41
   - connector_pin: 53
+    gpio: 42
     hw_functions:
       - i2c_1_sda
       - uart_1_cts
       - spi_1_sck
       - gpio42
   - connector_pin: 54
+    gpio: 43
     hw_functions:
       - i2c_1_scl
       - uart_1_rts
       - spi_1_tx
       - gpio43
   - connector_pin: 55
+    gpio: 44
     hw_functions:
       - i2c_0_sda
       - uart_0_tx
       - spi_1_rx
       - gpio44
   - connector_pin: 56
+    gpio: 45
     hw_functions:
       - i2c_0_scl
       - uart_0_rx
       - spi_1_csn
       - gpio45
   - connector_pin: 57
+    gpio: 46
     hw_functions:
       - i2c_1_sda
       - uart_0_cts
       - spi_1_sck
       - gpio46
   - connector_pin: 58
+    gpio: 47
     hw_functions:
       - i2c_1_scl
       - uart_0_rts
       - spi_1_tx
       - gpio47
   - connector_pin: 77
+    gpio: 0
     hw_functions:
       - i2c_0_sda
       - uart_0_tx
       - spi_0_rx
       - gpio0
   - connector_pin: 78
+    gpio: 1
     hw_functions:
       - i2c_0_scl
       - uart_0_rx
       - spi_0_csn
       - gpio1
   - connector_pin: 79
+    gpio: 2
     hw_functions:
       - i2c_1_sda
       - uart_0_cts
       - spi_0_sck
       - gpio2
   - connector_pin: 80
+    gpio: 3
     hw_functions:
       - i2c_1_scl
       - uart_0_rts
