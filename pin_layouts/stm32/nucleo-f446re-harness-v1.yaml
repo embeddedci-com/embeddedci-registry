@@ -14,7 +14,7 @@ signals:
     default_function: I2C1_SDA
     dut:
       connector: CN5
-      connector_type: arduino_digital
+      connector_type: arduino
       connector_pin: 9
       board_label: D14
     harness:
@@ -29,7 +29,7 @@ signals:
     default_function: I2C1_SCL
     dut:
       connector: CN5
-      connector_type: arduino_digital
+      connector_type: arduino
       connector_pin: 10
       board_label: D15
     harness:
@@ -44,7 +44,7 @@ signals:
     default_function: USART2_TX
     dut:
       connector: CN9
-      connector_type: arduino_digital
+      connector_type: arduino
       connector_pin: 2
       board_label: D1
     harness:
@@ -59,36 +59,22 @@ signals:
     default_function: USART2_RX
     dut:
       connector: CN9
-      connector_type: arduino_digital
+      connector_type: arduino
       connector_pin: 1
       board_label: D0
     harness:
       connector_pin: 1
       hw_functions:
         - i2c_0_sda
+        - uart_0_tx
         - spi_0_rx
         - gp0
-
-  - pin: NRST
-    default_function: RESET
-    dut:
-      connector: CN6
-      connector_type: arduino_power
-      connector_pin: 3
-      board_label: RESET
-    harness:
-      connector_pin: 5
-      hw_functions:
-        - i2c_1_scl
-        - spi_0_tx
-        - gp3
-
 
   - pin: BOOT0
     default_function: BOOT0
     dut:
       connector: CN7
-      connector_type: st_morpho
+      connector_type: morpho
       connector_pin: 7
       board_label: BOOT0
     harness:
@@ -102,7 +88,7 @@ signals:
     default_function: USART3_TX
     dut:
       connector: CN7
-      connector_type: st_morpho
+      connector_type: morpho
       connector_pin: 1
       board_label: PC10
     harness:
@@ -117,7 +103,7 @@ signals:
     default_function: USART3_RX
     dut:
       connector: CN7
-      connector_type: st_morpho
+      connector_type: morpho
       connector_pin: 2
       board_label: PC11
     harness:
@@ -131,8 +117,8 @@ signals:
     default_function: SPI1_SCK
     dut:
       connector: CN5
-      connector_type: arduino_digital
-      connector_pin: 7
+      connector_type: arduino
+      connector_pin: 6
       board_label: D13
     harness:
       connector_pin: 9
@@ -145,8 +131,8 @@ signals:
     default_function: SPI1_MISO
     dut:
       connector: CN5
-      connector_type: arduino_digital
-      connector_pin: 6
+      connector_type: arduino
+      connector_pin: 5
       board_label: D12
     harness:
       connector_pin: 10
@@ -159,8 +145,8 @@ signals:
     default_function: SPI1_MOSI
     dut:
       connector: CN5
-      connector_type: arduino_digital
-      connector_pin: 5
+      connector_type: arduino
+      connector_pin: 4
       board_label: D11
     harness:
       connector_pin: 11
@@ -174,7 +160,7 @@ signals:
     default_function: ADC1_IN0
     dut:
       connector: CN8
-      connector_type: arduino_analog
+      connector_type: arduino
       connector_pin: 1
       board_label: A0
     harness:
@@ -184,3 +170,355 @@ signals:
         - uart_1_rx
         - spi_1_csn
         - gp9
+
+  - pin: PB6
+    default_function: GPIO
+    dut:
+      connector: CN5
+      connector_type: arduino
+      connector_pin: 3
+      board_label: D10
+
+  - pin: PC7
+    default_function: GPIO
+    dut:
+      connector: CN5
+      connector_type: arduino
+      connector_pin: 2
+      board_label: D9
+    harness:
+      connector_pin: 19
+      hw_functions:
+        - i2c_1_sda
+        - spi_1_sck
+        - gp14
+
+  - pin: PA9
+    default_function: USART1_TX
+    dut:
+      connector: CN5
+      connector_type: arduino
+      connector_pin: 1
+      board_label: D8
+    harness:
+      connector_pin: 16
+      hw_functions:
+        - i2c_0_sda
+        - uart_0_tx
+        - spi_1_rx
+        - gp12
+
+  - pin: PA8
+    default_function: GPIO
+    dut:
+      connector: CN9
+      connector_type: arduino
+      connector_pin: 8
+      board_label: D7
+
+  - pin: PB10
+    default_function: GPIO
+    dut:
+      connector: CN9
+      connector_type: arduino
+      connector_pin: 7
+      board_label: D6
+
+  - pin: PB4
+    default_function: GPIO
+    dut:
+      connector: CN9
+      connector_type: arduino
+      connector_pin: 6
+      board_label: D5
+
+  - pin: PB5
+    default_function: GPIO
+    dut:
+      connector: CN9
+      connector_type: arduino
+      connector_pin: 5
+      board_label: D4
+    harness:
+      connector_pin: 20
+      hw_functions:
+        - i2c_1_scl
+        - spi_1_tx
+        - gp15
+
+  - pin: PB3
+    default_function: GPIO
+    dut:
+      connector: CN9
+      connector_type: arduino
+      connector_pin: 4
+      board_label: D3
+    harness:
+      connector_pin: 4
+      hw_functions:
+        - i2c_1_sda
+        - spi_0_sck
+        - gp2
+
+  - pin: PA10
+    default_function: USART1_RX
+    dut:
+      connector: CN9
+      connector_type: arduino
+      connector_pin: 3
+      board_label: D2
+    harness:
+      connector_pin: 17
+      hw_functions:
+        - i2c_0_scl
+        - uart_0_rx
+        - spi_1_csn
+        - gp13
+
+  - pin: PA1
+    default_function: ADC1_IN1
+    dut:
+      connector: CN8
+      connector_type: arduino
+      connector_pin: 2
+      board_label: A1
+
+  - pin: PA4
+    default_function: ADC1_IN4
+    dut:
+      connector: CN8
+      connector_type: arduino
+      connector_pin: 3
+      board_label: A2
+
+  - pin: PB0
+    default_function: ADC1_IN8
+    dut:
+      connector: CN8
+      connector_type: arduino
+      connector_pin: 4
+      board_label: A3
+
+  - pin: PC1
+    default_function: ADC1_IN11
+    dut:
+      connector: CN8
+      connector_type: arduino
+      connector_pin: 5
+      board_label: A4
+
+  - pin: PC0
+    default_function: ADC1_IN10
+    dut:
+      connector: CN8
+      connector_type: arduino
+      connector_pin: 6
+      board_label: A5
+
+  - pin: PC12
+    default_function: UART5_TX
+    dut:
+      connector: CN7
+      connector_type: morpho
+      connector_pin: 3
+      board_label: PC12
+
+  - pin: PD2
+    default_function: UART5_RX
+    dut:
+      connector: CN7
+      connector_type: morpho
+      connector_pin: 4
+      board_label: PD2
+
+  - pin: PA13
+    default_function: SWDIO
+    dut:
+      connector: CN7
+      connector_type: morpho
+      connector_pin: 13
+      board_label: PA13
+
+  - pin: PA14
+    default_function: SWCLK
+    dut:
+      connector: CN7
+      connector_type: morpho
+      connector_pin: 15
+      board_label: PA14
+
+  - pin: PA15
+    default_function: GPIO
+    dut:
+      connector: CN7
+      connector_type: morpho
+      connector_pin: 17
+      board_label: PA15
+
+  - pin: PB7
+    default_function: GPIO
+    dut:
+      connector: CN7
+      connector_type: morpho
+      connector_pin: 21
+      board_label: PB7
+
+  - pin: PC13
+    default_function: GPIO
+    dut:
+      connector: CN7
+      connector_type: morpho
+      connector_pin: 23
+      board_label: PC13
+
+  - pin: PC14
+    default_function: OSC32_IN
+    dut:
+      connector: CN7
+      connector_type: morpho
+      connector_pin: 25
+      board_label: PC14
+
+  - pin: PC15
+    default_function: OSC32_OUT
+    dut:
+      connector: CN7
+      connector_type: morpho
+      connector_pin: 27
+      board_label: PC15
+
+  - pin: PH0
+    default_function: OSC_IN
+    dut:
+      connector: CN7
+      connector_type: morpho
+      connector_pin: 29
+      board_label: PH0
+
+  - pin: PH1
+    default_function: OSC_OUT
+    dut:
+      connector: CN7
+      connector_type: morpho
+      connector_pin: 31
+      board_label: PH1
+
+  - pin: PC2
+    default_function: ADC1_IN12
+    dut:
+      connector: CN7
+      connector_type: morpho
+      connector_pin: 35
+      board_label: PC2
+
+  - pin: PC3
+    default_function: ADC1_IN13
+    dut:
+      connector: CN7
+      connector_type: morpho
+      connector_pin: 37
+      board_label: PC3
+
+  - pin: PC9
+    default_function: GPIO
+    dut:
+      connector: CN10
+      connector_type: morpho
+      connector_pin: 1
+      board_label: PC9
+
+  - pin: PC8
+    default_function: GPIO
+    dut:
+      connector: CN10
+      connector_type: morpho
+      connector_pin: 2
+      board_label: PC8
+
+  - pin: PC6
+    default_function: GPIO
+    dut:
+      connector: CN10
+      connector_type: morpho
+      connector_pin: 4
+      board_label: PC6
+
+  - pin: PC5
+    default_function: GPIO
+    dut:
+      connector: CN10
+      connector_type: morpho
+      connector_pin: 6
+      board_label: PC5
+
+  - pin: PA12
+    default_function: GPIO
+    dut:
+      connector: CN10
+      connector_type: morpho
+      connector_pin: 12
+      board_label: PA12
+
+  - pin: PA11
+    default_function: GPIO
+    dut:
+      connector: CN10
+      connector_type: morpho
+      connector_pin: 14
+      board_label: PA11
+
+  - pin: PB12
+    default_function: GPIO
+    dut:
+      connector: CN10
+      connector_type: morpho
+      connector_pin: 16
+      board_label: PB12
+
+  - pin: PB2
+    default_function: GPIO
+    dut:
+      connector: CN10
+      connector_type: morpho
+      connector_pin: 22
+      board_label: PB2
+
+  - pin: PB1
+    default_function: GPIO
+    dut:
+      connector: CN10
+      connector_type: morpho
+      connector_pin: 24
+      board_label: PB1
+
+  - pin: PB15
+    default_function: GPIO
+    dut:
+      connector: CN10
+      connector_type: morpho
+      connector_pin: 26
+      board_label: PB15
+
+  - pin: PB14
+    default_function: GPIO
+    dut:
+      connector: CN10
+      connector_type: morpho
+      connector_pin: 28
+      board_label: PB14
+
+  - pin: PB13
+    default_function: GPIO
+    dut:
+      connector: CN10
+      connector_type: morpho
+      connector_pin: 30
+      board_label: PB13
+
+  - pin: PC4
+    default_function: ADC1_IN14
+    dut:
+      connector: CN10
+      connector_type: morpho
+      connector_pin: 34
+      board_label: PC4
