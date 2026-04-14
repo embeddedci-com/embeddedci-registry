@@ -1,0 +1,97 @@
+type: pin_harness
+version: 1
+id: default-b
+name: Default harness B
+description: >
+  Harness-side connector pin index to logical hw_functions (I2C/UART/SPI/GPIO roles).
+
+pins:
+  - connector_pin: 1
+    hw_functions:
+      - i2c_0_sda
+      - uart_0_tx
+      - spi_0_rx
+      - gpio0
+  - connector_pin: 2
+    hw_functions:
+      - i2c_0_scl
+      - uart_0_rx
+      - spi_0_csn
+      - gpio1
+  - connector_pin: 4
+    hw_functions:
+      - i2c_1_sda
+      - spi_0_sck
+      - gpio2
+  - connector_pin: 6
+    hw_functions:
+      - i2c_0_sda
+      - uart_1_tx
+      - spi_0_rx
+      - gpio4
+  - connector_pin: 7
+    hw_functions:
+      - i2c_0_scl
+      - uart_1_rx
+      - spi_0_csn
+      - gpio5
+  - connector_pin: 9
+    hw_functions:
+      - i2c_1_sda
+      - spi_0_sck
+      - gpio6
+  - connector_pin: 10
+    hw_functions:
+      - i2c_1_scl
+      - spi_0_tx
+      - gpio7
+  - connector_pin: 11
+    hw_functions:
+      - i2c_0_sda
+      - uart_1_tx
+      - spi_1_rx
+      - gpio8
+  - connector_pin: 12
+    hw_functions:
+      - i2c_0_scl
+      - uart_1_rx
+      - spi_1_csn
+      - gpio9
+  - connector_pin: 14
+    hw_functions:
+      - i2c_1_sda
+      - spi_1_sck
+      - gpio10
+  - connector_pin: 15
+    hw_functions:
+      - i2c_1_scl
+      - spi_1_tx
+      - gpio11
+  - connector_pin: 16
+    hw_functions:
+      - i2c_0_sda
+      - uart_0_tx
+      - spi_1_rx
+      - gpio12
+  - connector_pin: 17
+    hw_functions:
+      - i2c_0_scl
+      - uart_0_rx
+      - spi_1_csn
+      - gpio13
+  - connector_pin: 19
+    hw_functions:
+      - i2c_1_sda
+      - spi_1_sck
+      - gpio14
+  - connector_pin: 20
+    hw_functions:
+      - i2c_1_scl
+      - spi_1_tx
+      - gpio15
+  - connector_pin: 21
+    hw_functions:
+      - i2c_0_sda
+      - uart_0_tx
+      - spi_0_rx
+      - gpio16
