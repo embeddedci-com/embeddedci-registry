@@ -23,7 +23,7 @@ signals:
         - i2c_0_sda
         - uart_1_tx
         - spi_0_rx
-        - gp4
+        - gpio4
 
   - pin: PB8
     default_function: I2C1_SCL
@@ -38,7 +38,7 @@ signals:
         - i2c_0_scl
         - uart_1_rx
         - spi_0_csn
-        - gp5
+        - gpio5
 
   - pin: PA2
     default_function: USART2_TX
@@ -53,7 +53,7 @@ signals:
         - i2c_0_scl
         - uart_0_rx
         - spi_0_csn
-        - gp1
+        - gpio1
 
   - pin: PA3
     default_function: USART2_RX
@@ -68,7 +68,7 @@ signals:
         - i2c_0_sda
         - uart_0_tx
         - spi_0_rx
-        - gp0
+        - gpio0
 
   - pin: BOOT0
     default_function: BOOT0
@@ -82,7 +82,7 @@ signals:
       hw_functions:
         - i2c_1_scl
         - spi_1_tx
-        - gp11
+        - gpio11
 
   - pin: PC10
     default_function: USART3_TX
@@ -97,7 +97,7 @@ signals:
         - i2c_0_sda
         - uart_0_tx
         - spi_0_rx
-        - gp16
+        - gpio16
 
   - pin: PC11
     default_function: USART3_RX
@@ -111,7 +111,7 @@ signals:
       hw_functions:
         - i2c_1_sda
         - spi_1_sck
-        - gp10
+        - gpio10
 
   - pin: PA5
     default_function: SPI1_SCK
@@ -125,7 +125,7 @@ signals:
       hw_functions:
         - i2c_1_sda
         - spi_0_sck
-        - gp6
+        - gpio6
 
   - pin: PA6
     default_function: SPI1_MISO
@@ -139,7 +139,7 @@ signals:
       hw_functions:
         - i2c_1_scl
         - spi_0_tx
-        - gp7
+        - gpio7
 
   - pin: PA7
     default_function: SPI1_MOSI
@@ -154,7 +154,7 @@ signals:
         - i2c_0_sda
         - uart_1_tx
         - spi_1_rx
-        - gp8
+        - gpio8
 
   - pin: PA0
     default_function: ADC1_IN0
@@ -169,7 +169,7 @@ signals:
         - i2c_0_scl
         - uart_1_rx
         - spi_1_csn
-        - gp9
+        - gpio9
 
   - pin: PB6
     default_function: GPIO
@@ -191,7 +191,7 @@ signals:
       hw_functions:
         - i2c_1_sda
         - spi_1_sck
-        - gp14
+        - gpio14
 
   - pin: PA9
     default_function: USART1_TX
@@ -206,7 +206,7 @@ signals:
         - i2c_0_sda
         - uart_0_tx
         - spi_1_rx
-        - gp12
+        - gpio12
 
   - pin: PA8
     default_function: GPIO
@@ -244,7 +244,7 @@ signals:
       hw_functions:
         - i2c_1_scl
         - spi_1_tx
-        - gp15
+        - gpio15
 
   - pin: PB3
     default_function: GPIO
@@ -258,7 +258,7 @@ signals:
       hw_functions:
         - i2c_1_sda
         - spi_0_sck
-        - gp2
+        - gpio2
 
   - pin: PA10
     default_function: USART1_RX
@@ -273,7 +273,7 @@ signals:
         - i2c_0_scl
         - uart_0_rx
         - spi_1_csn
-        - gp13
+        - gpio13
 
   - pin: PA1
     default_function: ADC1_IN1
