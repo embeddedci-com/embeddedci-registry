@@ -19,6 +19,11 @@ signals:
       board_label: D14
     harness:
       connector_pin: 6
+      hw_functions:
+        - i2c_0_sda
+        - uart_1_tx
+        - spi_0_rx
+        - gp4
 
   - pin: PB8
     default_function: I2C1_SCL
@@ -29,6 +34,11 @@ signals:
       board_label: D15
     harness:
       connector_pin: 7
+      hw_functions:
+        - i2c_0_scl
+        - uart_1_rx
+        - spi_0_csn
+        - gp5
 
   - pin: PA2
     default_function: USART2_TX
@@ -38,7 +48,12 @@ signals:
       connector_pin: 2
       board_label: D1
     harness:
-      connector_pin: 3
+      connector_pin: 2
+      hw_functions:
+        - i2c_0_scl
+        - uart_0_rx
+        - spi_0_csn
+        - gp1
 
   - pin: PA3
     default_function: USART2_RX
@@ -48,7 +63,11 @@ signals:
       connector_pin: 1
       board_label: D0
     harness:
-      connector_pin: 4
+      connector_pin: 1
+      hw_functions:
+        - i2c_0_sda
+        - spi_0_rx
+        - gp0
 
   - pin: NRST
     default_function: RESET
@@ -59,6 +78,10 @@ signals:
       board_label: RESET
     harness:
       connector_pin: 5
+      hw_functions:
+        - i2c_1_scl
+        - spi_0_tx
+        - gp3
 
 
   - pin: BOOT0
@@ -69,7 +92,11 @@ signals:
       connector_pin: 7
       board_label: BOOT0
     harness:
-      connector_pin: 13
+      connector_pin: 15
+      hw_functions:
+        - i2c_1_scl
+        - spi_1_tx
+        - gp11
 
   - pin: PC10
     default_function: USART3_TX
@@ -80,6 +107,11 @@ signals:
       board_label: PC10
     harness:
       connector_pin: 21
+      hw_functions:
+        - i2c_0_sda
+        - uart_0_tx
+        - spi_0_rx
+        - gp16
 
   - pin: PC11
     default_function: USART3_RX
@@ -89,7 +121,11 @@ signals:
       connector_pin: 2
       board_label: PC11
     harness:
-      connector_pin: 8
+      connector_pin: 14
+      hw_functions:
+        - i2c_1_sda
+        - spi_1_sck
+        - gp10
 
   - pin: PA5
     default_function: SPI1_SCK
@@ -100,6 +136,10 @@ signals:
       board_label: D13
     harness:
       connector_pin: 9
+      hw_functions:
+        - i2c_1_sda
+        - spi_0_sck
+        - gp6
 
   - pin: PA6
     default_function: SPI1_MISO
@@ -110,6 +150,10 @@ signals:
       board_label: D12
     harness:
       connector_pin: 10
+      hw_functions:
+        - i2c_1_scl
+        - spi_0_tx
+        - gp7
 
   - pin: PA7
     default_function: SPI1_MOSI
@@ -120,6 +164,11 @@ signals:
       board_label: D11
     harness:
       connector_pin: 11
+      hw_functions:
+        - i2c_0_sda
+        - uart_1_tx
+        - spi_1_rx
+        - gp8
 
   - pin: PA0
     default_function: ADC1_IN0
@@ -130,3 +179,8 @@ signals:
       board_label: A0
     harness:
       connector_pin: 12
+      hw_functions:
+        - i2c_0_scl
+        - uart_1_rx
+        - spi_1_csn
+        - gp9

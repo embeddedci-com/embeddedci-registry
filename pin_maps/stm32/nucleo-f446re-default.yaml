@@ -21,7 +21,7 @@ mappings:
       tx: PA2
       rx: PA3
     config:
-      baud_rate: 115200
+      baudrate: 115200
 
   - protocol: gpio
     lines:
