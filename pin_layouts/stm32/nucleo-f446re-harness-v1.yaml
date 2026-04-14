@@ -5,21 +5,23 @@ name: NUCLEO-F446RE Harness
 description: >
   Physical DUT-to-adapter harness mapping for NUCLEO-F446RE.
   MCU pin names (e.g. PB9, PA2) serve as canonical identifiers linking this layout to pin maps.
-  dut.connector_pin is the harness-side index (pin_harness/default-b.yaml); dut.board_connector_pin is the Nucleo connector position.
+  harness.connector_pin indexes pin_harness/default-b.yaml; dut.board_connector_pin is the Nucleo connector position.
 targets:
   - id: nucleo-f446re
 
-harness: default-b
+harness: default-a
 
 signals:
+
   - pin: PB9
     default_function: I2C1_SDA
     dut:
       connector: CN5
       connector_type: arduino
       board_connector_pin: 9
-      connector_pin: 6
       board_label: D14
+    harness:
+      connector_pin: 6
 
   - pin: PB8
     default_function: I2C1_SCL
@@ -27,8 +29,9 @@ signals:
       connector: CN5
       connector_type: arduino
       board_connector_pin: 10
-      connector_pin: 7
       board_label: D15
+    harness:
+      connector_pin: 7
 
   - pin: PA2
     default_function: USART2_TX
@@ -36,8 +39,9 @@ signals:
       connector: CN9
       connector_type: arduino
       board_connector_pin: 2
-      connector_pin: 2
       board_label: D1
+    harness:
+      connector_pin: 2
 
   - pin: PA3
     default_function: USART2_RX
@@ -45,8 +49,9 @@ signals:
       connector: CN9
       connector_type: arduino
       board_connector_pin: 1
-      connector_pin: 1
       board_label: D0
+    harness:
+      connector_pin: 1
 
   - pin: BOOT0
     default_function: BOOT0
@@ -54,8 +59,9 @@ signals:
       connector: CN7
       connector_type: morpho
       board_connector_pin: 7
-      connector_pin: 15
       board_label: BOOT0
+    harness:
+      connector_pin: 15
 
   - pin: PC10
     default_function: USART3_TX
@@ -63,8 +69,9 @@ signals:
       connector: CN7
       connector_type: morpho
       board_connector_pin: 1
-      connector_pin: 21
       board_label: PC10
+    harness:
+      connector_pin: 21
 
   - pin: PC11
     default_function: USART3_RX
@@ -72,8 +79,9 @@ signals:
       connector: CN7
       connector_type: morpho
       board_connector_pin: 2
-      connector_pin: 14
       board_label: PC11
+    harness:
+      connector_pin: 14
 
   - pin: PA5
     default_function: SPI1_SCK
@@ -81,8 +89,9 @@ signals:
       connector: CN5
       connector_type: arduino
       board_connector_pin: 6
-      connector_pin: 9
       board_label: D13
+    harness:
+      connector_pin: 9
 
   - pin: PA6
     default_function: SPI1_MISO
@@ -90,8 +99,9 @@ signals:
       connector: CN5
       connector_type: arduino
       board_connector_pin: 5
-      connector_pin: 10
       board_label: D12
+    harness:
+      connector_pin: 10
 
   - pin: PA7
     default_function: SPI1_MOSI
@@ -99,8 +109,9 @@ signals:
       connector: CN5
       connector_type: arduino
       board_connector_pin: 4
-      connector_pin: 11
       board_label: D11
+    harness:
+      connector_pin: 11
 
   - pin: PA0
     default_function: ADC1_IN0
@@ -108,8 +119,9 @@ signals:
       connector: CN8
       connector_type: arduino
       board_connector_pin: 1
-      connector_pin: 12
       board_label: A0
+    harness:
+      connector_pin: 12
 
   - pin: PB6
     default_function: GPIO
@@ -125,8 +137,9 @@ signals:
       connector: CN5
       connector_type: arduino
       board_connector_pin: 2
-      connector_pin: 19
       board_label: D9
+    harness:
+      connector_pin: 19
 
   - pin: PA9
     default_function: USART1_TX
@@ -134,8 +147,9 @@ signals:
       connector: CN5
       connector_type: arduino
       board_connector_pin: 1
-      connector_pin: 16
       board_label: D8
+    harness:
+      connector_pin: 16
 
   - pin: PA8
     default_function: GPIO
@@ -167,8 +181,9 @@ signals:
       connector: CN9
       connector_type: arduino
       board_connector_pin: 5
-      connector_pin: 20
       board_label: D4
+    harness:
+      connector_pin: 20
 
   - pin: PB3
     default_function: GPIO
@@ -176,8 +191,9 @@ signals:
       connector: CN9
       connector_type: arduino
       board_connector_pin: 4
-      connector_pin: 4
       board_label: D3
+    harness:
+      connector_pin: 4
 
   - pin: PA10
     default_function: USART1_RX
@@ -185,8 +201,9 @@ signals:
       connector: CN9
       connector_type: arduino
       board_connector_pin: 3
-      connector_pin: 17
       board_label: D2
+    harness:
+      connector_pin: 17
 
   - pin: PA1
     default_function: ADC1_IN1
