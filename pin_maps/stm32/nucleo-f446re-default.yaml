@@ -20,6 +20,7 @@ mappings:
     lines:
       tx: PA2
       rx: PA3
+    swapped_lines: true # TX and RX are always swapped (tx -> rx and rx -> tx)
     config:
       baudrate: 115200
 
