@@ -1,5 +1,4 @@
-# Scenario profile: variables and constraints for the built-in drone altitude example.
-# Merged with the webapp scenario YAML via registry_scenario reference.
+# Scenario profile: variables, constraints, and runtime model for the drone altitude HIL example.
 
 type: scenario_profile
 id: drone-altitude-basic
@@ -10,9 +9,61 @@ variables:
   - vertical_speed_fpm
   - pressure_pa
 
-# pressure_pa appears in initial_state from built-in scenario; used for barometric sanity checks.
-
 constraints:
   pressure_pa:
     min: 30000
     max: 110000
+
+initial_state:
+  altitude_ft: 0
+  vertical_speed_fpm: 0
+  pressure_pa: 101325
+
+behavior:
+  rules:
+    - name: pressure_from_altitude
+      when: {}
+      then:
+        set:
+          pressure_pa: "101325 - (altitude_ft * 12.0)"
+
+    - name: altitude_from_pressure
+      when: {}
+      then:
+        set:
+          altitude_ft: "(101325 - pressure_pa) / 12.0"
+
+    - name: rotor_generates_lift
+      when:
+        gpio.rotor_enable: ON
+      then:
+        set:
+          vertical_speed_fpm: 600
+
+    - name: no_lift_fall
+      when:
+        gpio.rotor_enable: OFF
+      then:
+        set:
+          vertical_speed_fpm: -300
+
+    # Rule order is the contract: baro + lift, then integrate altitude each tick.
+    - name: integrate_altitude
+      when: {}
+      then:
+        set:
+          altitude_ft: "altitude_ft + (vertical_speed_fpm / 60.0) * dt_seconds"
+
+runtime:
+  tick_ms: 150
+  altitude_max_ft: 5000
+  pressure_push_min_interval_ms: 100
+  pressure_push_min_delta_pa: 2
+  simulator_control:
+    protocol: i2c
+    sensor: bmp280
+
+ui:
+  altitude_panel: true
+  altitude_display_max_ft: 100
+  panel_height_px: 440
