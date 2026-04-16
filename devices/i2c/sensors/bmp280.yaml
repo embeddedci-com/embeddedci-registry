@@ -1,0 +1,25 @@
+# BMP280 — modifiable simulator fields (HIL adapter firmware + server contract).
+# Altitude is not a BMP280 output; applications derive it from pressure and their own reference.
+
+sensor_id: bmp280
+bus: i2c
+simulator_name: bmp280
+
+modifiable_fields:
+  temperature_c:
+    unit: degC
+    description: Compensated temperature the DUT reads after decoding raw ADC.
+    recommended_min: -40
+    recommended_max: 85
+
+  pressure_pa:
+    unit: Pa
+    description: Absolute pressure the DUT reads after decoding raw ADC.
+    recommended_min: 30000
+    recommended_max: 110000
+
+  enabled:
+    type: boolean
+    description: >-
+      When false, measurement registers are driven to zero and the device behaves
+      like sleep mode (I2C slave remains responsive for ID/config reads).
