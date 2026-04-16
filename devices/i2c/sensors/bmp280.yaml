@@ -1,7 +1,9 @@
 # BMP280 — modifiable simulator fields (HIL adapter firmware + server contract).
 # Altitude is not a BMP280 output; applications derive it from pressure and their own reference.
 
+type: registry_device
 sensor_id: bmp280
+default_address: 0x76
 bus: i2c
 simulator_name: bmp280
 

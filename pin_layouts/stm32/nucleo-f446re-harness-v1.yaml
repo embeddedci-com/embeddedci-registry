@@ -11,6 +11,20 @@ targets:
 
 harness: default-a
 
+# SVG simulation tables: dut.connector must match an entry below; row/col are derived from
+# dut.board_connector_pin using progression (horizontal = fill rows, vertical = fill columns).
+# CN7 = left morpho, CN10 = right morpho on NUCLEO-F446RE.
+simulation_visual:
+  connectors:
+    - connector: CN7
+      table: left-header
+      progression: horizontal
+      pins_per_row: 2
+    - connector: CN10
+      table: right-header
+      progression: vertical
+      pins_per_column: 2
+
 signals:
 
   - pin: PB9

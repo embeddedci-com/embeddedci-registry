@@ -1,0 +1,21 @@
+# VL53L0X — modifiable simulator fields (HIL adapter firmware + server contract).
+# Pololu-style driver: model ID at 0xC0 is 0xEE; range is read as 16-bit from the result block.
+
+sensor_id: vl53l0x
+bus: i2c
+simulator_name: vl53l0x
+
+modifiable_fields:
+  range_mm:
+    unit: mm
+    description: >-
+      Distance returned in the ranging result register block (16-bit big-endian on wire;
+      simulator TLV uses uint16 little-endian). Matches driver timeout / invalid when 65535.
+    recommended_min: 30
+    recommended_max: 2000
+
+  enabled:
+    type: boolean
+    description: >-
+      When false, the simulator forces an invalid range (65535) and suppresses data-ready
+      interrupt bits until enabled again (I2C slave remains responsive for ID / init reads).

@@ -1,0 +1,18 @@
+# Scenario profile: variables and constraints for the built-in drone altitude example.
+# Merged with the webapp scenario YAML via registry_scenario reference.
+
+type: scenario_profile
+id: drone-altitude-basic
+description: "Drone altitude HIL — rotor lift + barometric altitude from pressure"
+
+variables:
+  - altitude_ft
+  - vertical_speed_fpm
+  - pressure_pa
+
+# pressure_pa appears in initial_state from built-in scenario; used for barometric sanity checks.
+
+constraints:
+  pressure_pa:
+    min: 30000
+    max: 110000
