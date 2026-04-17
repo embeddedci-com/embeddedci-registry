@@ -55,7 +55,13 @@ behavior:
           altitude_ft: "altitude_ft + (vertical_speed_fpm / 60.0) * dt_seconds"
 
 runtime:
-  tick_ms: 150
+  tick_ms: 500
+  simulation_timeout_ms: 60000
+  simulation_end:
+    altitude_ft:
+      max: 5000
+      min: 0
+      lte_arm_ft: 5
   altitude_max_ft: 5000
   pressure_push_min_interval_ms: 100
   pressure_push_min_delta_pa: 2
