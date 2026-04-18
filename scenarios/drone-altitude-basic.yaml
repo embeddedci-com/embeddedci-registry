@@ -56,7 +56,7 @@ behavior:
 
 runtime:
   tick_ms: 500
-  simulation_timeout_ms: 60000
+  simulation_timeout_ms: 3600000 # 1h wall clock (tick loop); end conditions still apply
   simulation_end:
     altitude_ft:
       max: 5000
