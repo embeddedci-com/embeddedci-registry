@@ -33,7 +33,7 @@ dependencies:
 
 artifacts:
   - name: deploy-images
-    path: "tmp/deploy/images/"
+    path: "yocto-staging/tmp/deploy/images/"
 
 skip:
   check_paths:

@@ -11,8 +11,10 @@
 #   PACK_ARTIFACTS_JSON
 #                     JSON array of artifact objects from resolved artifacts list:
 #                     [{"name":"...","path":"...","source_path":"...","optional":false}, ...]
-#                     This script consumes each artifact object's `path` as a path
-#                     relative to tmp/deploy.
+#                     This script resolves each artifact object's `path` under
+#                     tmp/deploy. Leading yocto-staging/ and tmp/deploy/
+#                     components are accepted because `path` is also the
+#                     logical published path.
 #
 # Paths:
 #   BUILD_ROOT, YOCTO_STAGING_DIR, YOCTO_SSTATE_DIR, YOCTO_DL_DIR — see definitions.yaml
@@ -175,6 +177,17 @@ staging="${BUILD_ROOT}/${YOCTO_STAGING_DIR}"
 rm -rf "${staging}"
 mkdir -p "${staging}"
 
+yocto_list_dir() {
+  local label="${1}"
+  local dir="${2}"
+  echo "yocto-image: ${label}: ${dir}" >&2
+  if [[ ! -d "${dir}" ]]; then
+    echo "yocto-image: ${label}: not a directory" >&2
+    return 0
+  fi
+  find "${dir}" -maxdepth 2 -mindepth 1 -printf 'yocto-image:   %y %p\n' 2>/dev/null | head -50 >&2 || true
+}
+
 if [[ -z "${PACK_ARTIFACTS_JSON:-}" ]]; then
   echo "yocto-image: PACK_ARTIFACTS_JSON must be set (JSON array of artifact objects)" >&2
   exit 1
@@ -186,9 +199,19 @@ fi
 
 while IFS= read -r rel; do
   [[ -z "${rel}" ]] && continue
-  src="${deploy_root}/${rel}"
+  deploy_rel="${rel#/}"
+  deploy_rel="${deploy_rel#${YOCTO_STAGING_DIR}/}"
+  deploy_rel="${deploy_rel#tmp/deploy/}"
+  src="${deploy_root}/${deploy_rel}"
   if [[ ! -e "${src}" ]]; then
-    echo "yocto-image: missing ${src} (artifact path ${rel})" >&2
+    echo "yocto-image: missing artifact" >&2
+    echo "yocto-image:   declared path: ${rel}" >&2
+    echo "yocto-image:   deploy-relative path: ${deploy_rel}" >&2
+    echo "yocto-image:   deploy root: ${deploy_root}" >&2
+    echo "yocto-image:   expected source: ${src}" >&2
+    yocto_list_dir "deploy root listing" "${deploy_root}"
+    yocto_list_dir "deploy images listing" "${deploy_root}/images"
+    yocto_list_dir "expected parent listing" "$(dirname "${src}")"
     exit 1
   fi
   dst="${staging}/${rel}"
