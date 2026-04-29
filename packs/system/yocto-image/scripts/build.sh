@@ -209,6 +209,10 @@ while IFS= read -r rel; do
     echo "yocto-image:   deploy-relative path: ${deploy_rel}" >&2
     echo "yocto-image:   deploy root: ${deploy_root}" >&2
     echo "yocto-image:   expected source: ${src}" >&2
+    if [[ "${deploy_rel}" == images/* && ! -d "${deploy_root}/images" ]]; then
+      echo "yocto-image:   note: ${deploy_root}/images does not exist; the Yocto build completed without deployable image outputs" >&2
+      echo "yocto-image:   hint: set IMAGE_FSTYPES in the kas local_conf_header or adjust the artifact path to an output that is actually produced" >&2
+    fi
     yocto_list_dir "deploy root listing" "${deploy_root}"
     yocto_list_dir "deploy images listing" "${deploy_root}/images"
     yocto_list_dir "expected parent listing" "$(dirname "${src}")"
