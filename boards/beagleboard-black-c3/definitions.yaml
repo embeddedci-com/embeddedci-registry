@@ -15,6 +15,15 @@ console: ttyO0,115200n8
 defconfig: multi_v7
 dtbs: 
   - am335x-boneblack.dtb
+
+# Prepareboot artifact basenames as they appear inside the build artifact tarball.
+# The hw-agent extracts only entries matching these names (no filename guessing).
+# Default (non-Yocto) names; the *.gz envelope is allowed and gets stripped on deploy.
+kernel_artifact: zImage
+rootfs_artifact: rootfs.ext4
+# Yocto pack overrides (used when the build has the system/yocto-image pack).
+yocto_kernel: zImage
+yocto_rootfs: core-image-minimal-beaglebone.rootfs.tar.xz
 kernel_config:
   - enable:CONFIG_DEVTMPFS
   - enable:CONFIG_DEVTMPFS_MOUNT
