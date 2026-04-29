@@ -12,12 +12,11 @@
 #                     JSON array of artifact objects from resolved artifacts list:
 #                     [{"name":"...","path":"...","source_path":"...","optional":false}, ...]
 #                     This script resolves each artifact object's `path` under
-#                     tmp/deploy. Leading yocto-staging/ and tmp/deploy/
-#                     components are accepted because `path` is also the
-#                     logical published path.
+#                     tmp/deploy. A leading tmp/deploy/ component is accepted
+#                     because `path` is also the logical published path.
 #
 # Paths:
-#   BUILD_ROOT, YOCTO_STAGING_DIR, YOCTO_SSTATE_DIR, YOCTO_DL_DIR — see definitions.yaml
+#   BUILD_ROOT, YOCTO_SSTATE_DIR, YOCTO_DL_DIR — see definitions.yaml
 #   YOCTO_GIT_MIRROR_LIST (optional; default /cache/git-mirror-list.txt)
 #     Lines: upstream_git_url|/absolute/path/to/bare/mirror.git (see delimiter note in that file).
 #     When present and non-empty, BitBake uses explicit PREMIRRORS to local bare repos, plus
@@ -76,9 +75,6 @@ YOCTO_CACHE_DIR="$(yocto_resolve_path "${YOCTO_CACHE_DIR:-.cache}")"
 export XDG_CACHE_HOME="${YOCTO_CACHE_DIR}"
 export PIP_CACHE_DIR="${YOCTO_CACHE_DIR}/pip"
 mkdir -p "${XDG_CACHE_HOME}" "${PIP_CACHE_DIR}"
-
-YOCTO_STAGING_DIR="${YOCTO_STAGING_DIR:-yocto-staging}"
-YOCTO_STAGING_DIR="${YOCTO_STAGING_DIR#/}"
 
 # Local bare git mirrors: map each upstream URL from YOCTO_GIT_MIRROR_LIST to git:///path
 # (PREMIRRORS replacement), not SOURCE_MIRROR_URL tarball layout (own-mirrors).
@@ -166,16 +162,38 @@ echo "yocto-image: kas build ${KAS_YML_NAME} in ${KAS_WORK}"
   "${KAS_BIN}" build "${KAS_YML_NAME}"
 )
 
-deploy_root="$(find "${KAS_WORK}" -type d -path '*/tmp/deploy' 2>/dev/null | head -1 || true)"
+yocto_bitbake_var() {
+  local var="${1}"
+  (
+    cd "${KAS_WORK}"
+    "${KAS_BIN}" shell -k "${KAS_YML_NAME}" -c "bitbake -e | sed -n 's/^${var}=\"\\(.*\\)\"$/\\1/p' | tail -1"
+  ) 2>/dev/null | tail -1 || true
+}
+
+deploy_image_dir="$(yocto_bitbake_var DEPLOY_DIR_IMAGE)"
+deploy_root="$(
+  find "${KAS_WORK}" -type d -path '*/tmp/deploy' 2>/dev/null |
+    while IFS= read -r candidate; do
+      if [[ -d "${candidate}/images" ]]; then
+        printf '%s\n' "${candidate}"
+        break
+      fi
+    done
+)"
+if [[ -n "${deploy_image_dir}" ]]; then
+  echo "yocto-image: DEPLOY_DIR_IMAGE=${deploy_image_dir}"
+  if [[ -d "${deploy_image_dir}" ]]; then
+    deploy_root="$(dirname "$(dirname "${deploy_image_dir}")")"
+  fi
+fi
+if [[ -z "${deploy_root}" ]]; then
+  deploy_root="$(find "${KAS_WORK}" -type d -path '*/tmp/deploy' 2>/dev/null | head -1 || true)"
+fi
 if [[ -z "${deploy_root}" ]]; then
   echo "yocto-image: could not find */tmp/deploy under ${KAS_WORK}" >&2
   exit 1
 fi
 echo "yocto-image: deploy root ${deploy_root}"
-
-staging="${BUILD_ROOT}/${YOCTO_STAGING_DIR}"
-rm -rf "${staging}"
-mkdir -p "${staging}"
 
 yocto_list_dir() {
   local label="${1}"
@@ -186,6 +204,20 @@ yocto_list_dir() {
     return 0
   fi
   find "${dir}" -maxdepth 2 -mindepth 1 -printf 'yocto-image:   %y %p\n' 2>/dev/null | head -50 >&2 || true
+}
+
+yocto_find_image_candidates() {
+  echo "yocto-image: deploy roots under KAS_WORK:" >&2
+  find "${KAS_WORK}" -type d -path '*/tmp/deploy' -printf 'yocto-image:   %p\n' 2>/dev/null | head -20 >&2 || true
+  echo "yocto-image: deploy image directories under KAS_WORK:" >&2
+  find "${KAS_WORK}" -type d -path '*/deploy/images*' -printf 'yocto-image:   %p\n' 2>/dev/null | head -50 >&2 || true
+  echo "yocto-image: likely image files under KAS_WORK:" >&2
+  find "${KAS_WORK}" -type f \( \
+    -name '*.wic' -o -name '*.wic.*' -o \
+    -name '*.ext2' -o -name '*.ext3' -o -name '*.ext4' -o -name '*.ext4.*' -o \
+    -name '*.tar' -o -name '*.tar.*' -o \
+    -name '*core-image*' \
+  \) -printf 'yocto-image:   %p\n' 2>/dev/null | head -100 >&2 || true
 }
 
 if [[ -z "${PACK_ARTIFACTS_JSON:-}" ]]; then
@@ -200,7 +232,6 @@ fi
 while IFS= read -r rel; do
   [[ -z "${rel}" ]] && continue
   deploy_rel="${rel#/}"
-  deploy_rel="${deploy_rel#${YOCTO_STAGING_DIR}/}"
   deploy_rel="${deploy_rel#tmp/deploy/}"
   src="${deploy_root}/${deploy_rel}"
   if [[ ! -e "${src}" ]]; then
@@ -216,12 +247,18 @@ while IFS= read -r rel; do
     yocto_list_dir "deploy root listing" "${deploy_root}"
     yocto_list_dir "deploy images listing" "${deploy_root}/images"
     yocto_list_dir "expected parent listing" "$(dirname "${src}")"
+    yocto_find_image_candidates
     exit 1
   fi
-  dst="${staging}/${rel}"
+  dst="${BUILD_ROOT}/${rel#/}"
+  rm -rf "${dst}"
   mkdir -p "$(dirname "${dst}")"
-  cp -a "${src}" "${dst}"
-  echo "yocto-image: staged ${rel}"
+  if mv "${src}" "${dst}"; then
+    echo "yocto-image: moved ${rel}"
+  else
+    cp -a "${src}" "${dst}"
+    echo "yocto-image: staged ${rel}"
+  fi
 done < <(jq -r '.[] | select(type == "object") | .path // empty' <<< "${PACK_ARTIFACTS_JSON}")
 
-echo "yocto-image: done, staging dir ${staging}"
+echo "yocto-image: done"
