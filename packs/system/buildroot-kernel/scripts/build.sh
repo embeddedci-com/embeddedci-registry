@@ -40,6 +40,28 @@ copy_if_exists() {
   fi
 }
 
+split_csv() {
+  tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sed '/^$/d'
+}
+
+# Resolve a DTB basename under Buildroot output ($BR_OUT). Prefer $BR_OUT/images (installed
+# blobs), then search $BR_OUT/build (linux tree) when linux-dtbs did not copy to images yet.
+resolve_dtb_source() {
+  local name="$1"
+  local found=""
+  if [[ -d "$BR_OUT/images" ]]; then
+    found="$(find "$BR_OUT/images" -type f -name "$name" 2>/dev/null | head -n 1 || true)"
+  fi
+  if [[ -z "$found" && -d "$BR_OUT/build" ]]; then
+    found="$(find "$BR_OUT/build" -type f -name "$name" 2>/dev/null | head -n 1 || true)"
+  fi
+  if [[ -n "$found" ]]; then
+    printf '%s\n' "$found"
+    return 0
+  fi
+  return 1
+}
+
 : "${BUILD_ROOT:?BUILD_ROOT required}"
 : "${PROJECT_ROOT:?PROJECT_ROOT required}"
 : "${SOURCE:?SOURCE required (path or git URL for BR2_EXTERNAL)}"
@@ -150,7 +172,12 @@ fi
 make "${MAKE_ARGS[@]}" olddefconfig
 make "${MAKE_ARGS[@]}" linux-reconfigure
 make "${MAKE_ARGS[@]}" linux
-make "${MAKE_ARGS[@]}" linux-dtbs || true
+# When the board lists DTBs, device-tree blobs must be built; otherwise tolerate missing target.
+if [[ -n "${BOARD_DTBS:-}" ]]; then
+  make "${MAKE_ARGS[@]}" linux-dtbs
+else
+  make "${MAKE_ARGS[@]}" linux-dtbs || true
+fi
 popd >/dev/null
 
 if [[ "$BR_OUT" != "$BR_OUT_STAGING" ]]; then
@@ -169,14 +196,25 @@ else
   copy_if_exists "$BR_OUT/images/Image" "$KERNEL_OUT/Image"
 fi
 
-if [[ -d "$BR_OUT/images" ]]; then
-  _dtb_list="${BUILD_ROOT}/.buildroot_kernel_dtbs.$$"
-  find "$BR_OUT/images" -type f -name "*.dtb" > "$_dtb_list" || true
-  while IFS= read -r dtb || [[ -n "$dtb" ]]; do
-    [[ -z "$dtb" ]] && continue
-    cp "$dtb" "$KERNEL_OUT/dtbs/$(basename "$dtb")"
-  done < "$_dtb_list"
-  rm -f "$_dtb_list"
+if [[ -n "${BOARD_DTBS:-}" ]]; then
+  # Board YAML dtbs: → BOARD_DTBS in env (comma-separated basenames). Stage under kernel/dtbs/
+  # for the pack artifact path "kernel" so uploads include them. When unset, no DTBs are staged
+  # (avoids shipping hundreds of unrelated multi_v7 blobs).
+  while IFS= read -r requested_dtb; do
+    [[ -z "$requested_dtb" ]] && continue
+    if ! src="$(resolve_dtb_source "$requested_dtb")"; then
+      echo "ERROR: Requested DTB not found under ${BR_OUT}/images or ${BR_OUT}/build: ${requested_dtb}" >&2
+      exit 1
+    fi
+    cp "$src" "$KERNEL_OUT/dtbs/${requested_dtb}"
+  done < <(echo "${BOARD_DTBS}" | split_csv)
+  staged_count="$(find "$KERNEL_OUT/dtbs" -mindepth 1 -maxdepth 1 -type f -name '*.dtb' 2>/dev/null | wc -l | tr -d '[:space:]')"
+  if [[ -z "${staged_count}" || "${staged_count}" -eq 0 ]]; then
+    echo "ERROR: BOARD_DTBS is set (${BOARD_DTBS}) but ${KERNEL_OUT}/dtbs/ contains no .dtb files after staging." >&2
+    echo "       Debug: BR_OUT=${BR_OUT}; list images: $(ls -1 "${BR_OUT}/images" 2>/dev/null | head -c 500 || echo '<no images dir>')" >&2
+    echo "       Expect each comma-separated basename to be resolved from ${BR_OUT}/images or ${BR_OUT}/build (see resolve_dtb_source in this script)." >&2
+    exit 1
+  fi
 fi
 
 if [[ ! -f "$KERNEL_OUT/Image" && ! -f "$KERNEL_OUT/zImage" ]]; then
