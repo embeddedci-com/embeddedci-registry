@@ -45,7 +45,7 @@ split_csv() {
 }
 
 # Resolve a DTB basename under Buildroot output ($BR_OUT). Prefer $BR_OUT/images (installed
-# blobs), then search $BR_OUT/build (linux tree) when linux-dtbs did not copy to images yet.
+# blobs), then search $BR_OUT/build (linux tree) when BR2 did not install that blob to images/.
 resolve_dtb_source() {
   local name="$1"
   local found=""
@@ -171,13 +171,9 @@ fi
 
 make "${MAKE_ARGS[@]}" olddefconfig
 make "${MAKE_ARGS[@]}" linux-reconfigure
+# Buildroot has no top-level "linux-dtbs" target; the linux package builds/installs DTBs as part
+# of "make linux" (see linux/linux.mk: LINUX_BUILD_CMDS → LINUX_BUILD_DTB + LINUX_INSTALL_DTB).
 make "${MAKE_ARGS[@]}" linux
-# When the board lists DTBs, device-tree blobs must be built; otherwise tolerate missing target.
-if [[ -n "${BOARD_DTBS:-}" ]]; then
-  make "${MAKE_ARGS[@]}" linux-dtbs
-else
-  make "${MAKE_ARGS[@]}" linux-dtbs || true
-fi
 popd >/dev/null
 
 if [[ "$BR_OUT" != "$BR_OUT_STAGING" ]]; then
