@@ -4,12 +4,12 @@
 #       config:
 #         ref: v6.12
 #         arch: arm64
-#         buildroot_defconfig: arm_defconfig
+#         defconfig: arm_defconfig   # any *_defconfig under BR2_EXTERNAL configs/
 type: kernel
 
 config:
   source: "{{source}}"
-  buildroot_defconfig: "{{buildroot_defconfig}}"
+  defconfig: "{{defconfig}}"
   ref: "{{ref}}"
   arch: "{{arch}}"
   buildroot_config_dir: "{{build_root}}/buildroot_external"
@@ -17,7 +17,7 @@ config:
 
 default_vars:
   source: ""
-  buildroot_defconfig: arm_defconfig
+  defconfig: arm_defconfig
   ref: v6.12
   arch: arm64
   buildroot_repo: https://github.com/buildroot/buildroot.git

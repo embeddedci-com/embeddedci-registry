@@ -3,8 +3,12 @@
 #
 # Required env:
 #   BUILD_ROOT, PROJECT_ROOT
-#   SOURCE, BUILDROOT_DEFCONFIG   (Buildroot make defconfig target from BR2_EXTERNAL, e.g. arm_defconfig)
-#   ARCH, REF
+#   SOURCE, ARCH, REF
+#   DEFCONFIG — pack config key "defconfig": Buildroot defconfig make target from BR2_EXTERNAL (configs/*.defconfig).
+#
+# Device trees: BR2_LINUX_KERNEL_DTS_SUPPORT should be y in defconfigs that ship DTBs; BOARD_DTBS from board
+# dtbs: YAML becomes BR2_LINUX_KERNEL_INTREE_DTS_NAME (dts basenames). DTBs are copied from $O/images/
+# only into kernel/dtbs/ for artifacts.
 #
 # Optional env:
 #   BOARD_DEFCONFIG            (Linux kernel defconfig basename for BR2_LINUX_KERNEL_DEFCONFIG; boards/*/definitions.yaml key defconfig)
@@ -44,30 +48,14 @@ split_csv() {
   tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sed '/^$/d'
 }
 
-# Resolve a DTB basename under Buildroot output ($BR_OUT). Prefer $BR_OUT/images (installed
-# blobs), then search $BR_OUT/build (linux tree) when BR2 did not install that blob to images/.
-resolve_dtb_source() {
-  local name="$1"
-  local found=""
-  if [[ -d "$BR_OUT/images" ]]; then
-    found="$(find "$BR_OUT/images" -type f -name "$name" 2>/dev/null | head -n 1 || true)"
-  fi
-  if [[ -z "$found" && -d "$BR_OUT/build" ]]; then
-    found="$(find "$BR_OUT/build" -type f -name "$name" 2>/dev/null | head -n 1 || true)"
-  fi
-  if [[ -n "$found" ]]; then
-    printf '%s\n' "$found"
-    return 0
-  fi
-  return 1
-}
-
 : "${BUILD_ROOT:?BUILD_ROOT required}"
 : "${PROJECT_ROOT:?PROJECT_ROOT required}"
 : "${SOURCE:?SOURCE required (path or git URL for BR2_EXTERNAL)}"
-: "${BUILDROOT_DEFCONFIG:?BUILDROOT_DEFCONFIG required (Buildroot defconfig target)}"
 : "${ARCH:?ARCH required}"
 : "${REF:?REF required}"
+
+: "${DEFCONFIG:?Pack config defconfig is required (BR2_EXTERNAL make target matching configs/<name>_defconfig)}"
+BR2_BASE_DEFCONFIG="${DEFCONFIG}"
 
 EFFECTIVE_ARCH="${BOARD_ARCH:-$ARCH}"
 KERNEL_DEFCONFIG="${KERNEL_DEFCONFIG:-${BOARD_DEFCONFIG:-defconfig}}"
@@ -122,7 +110,8 @@ fi
 echo "[*] Buildroot kernel-only build"
 echo "    BUILDROOT_TREE=$BUILDROOT_TREE"
 echo "    BUILDROOT_CONFIG_DIR=$BUILDROOT_CONFIG_DIR"
-echo "    BUILDROOT_DEFCONFIG=$BUILDROOT_DEFCONFIG"
+echo "    defconfig=${DEFCONFIG}"
+echo "    BR2_BASE_DEFCONFIG=${BR2_BASE_DEFCONFIG}"
 echo "    ARCH=$ARCH"
 echo "    EFFECTIVE_ARCH=$EFFECTIVE_ARCH"
 echo "    KERNEL_DEFCONFIG=$KERNEL_DEFCONFIG"
@@ -131,7 +120,7 @@ echo "    O=$BR_OUT"
 
 MAKE_ARGS=(BR2_EXTERNAL="$BUILDROOT_CONFIG_DIR" O="$BR_OUT")
 pushd "$BUILDROOT_TREE" >/dev/null
-make "${MAKE_ARGS[@]}" "$BUILDROOT_DEFCONFIG"
+make "${MAKE_ARGS[@]}" "$BR2_BASE_DEFCONFIG"
 
 CONFIG_FILE="$BR_OUT/.config"
 if [[ ! -f "$CONFIG_FILE" ]]; then
@@ -169,6 +158,28 @@ else
   exit 1
 fi
 
+# BR2_LINUX_KERNEL_DTS_SUPPORT=y is in arm/arm64 defconfigs; INTREE names come from board dtbs: basenames.
+br2_intree_dts_names=""
+if [[ -n "${BOARD_DTBS:-}" ]]; then
+  while IFS= read -r piece; do
+    [[ -z "$piece" ]] && continue
+    stem="${piece%.dtb}"
+    stem="${stem%.dts}"
+    [[ -z "$stem" ]] && continue
+    if [[ -n "$br2_intree_dts_names" ]]; then
+      br2_intree_dts_names+=" "
+    fi
+    br2_intree_dts_names+="$stem"
+  done < <(echo "${BOARD_DTBS}" | split_csv)
+  if [[ -n "$br2_intree_dts_names" ]]; then
+    # DTS_SUPPORT=y is expected from generic-kernel defconfigs when building DTBs; set which DTS to build/install.
+    set_str "$CONFIG_FILE" BR2_LINUX_KERNEL_INTREE_DTS_NAME "$br2_intree_dts_names"
+    echo "[*] BR2_LINUX_KERNEL_INTREE_DTS_NAME=\"${br2_intree_dts_names}\" (from board dtbs:)"
+  fi
+else
+  set_no "$CONFIG_FILE" BR2_LINUX_KERNEL_DTS_SUPPORT
+fi
+
 make "${MAKE_ARGS[@]}" olddefconfig
 make "${MAKE_ARGS[@]}" linux-reconfigure
 # Buildroot has no top-level "linux-dtbs" target; the linux package builds/installs DTBs as part
@@ -192,25 +203,26 @@ else
   copy_if_exists "$BR_OUT/images/Image" "$KERNEL_OUT/Image"
 fi
 
+# Device trees: Buildroot installs *.dtb under $O/images/ (flat or subdirs). Copy only from there
+# into kernel/dtbs/ for the pack artifact path "kernel/"; do not search the linux build tree.
+if [[ -d "${BR_OUT}/images" ]]; then
+  while IFS= read -r -d '' f; do
+    base="$(basename "$f")"
+    cp "$f" "$KERNEL_OUT/dtbs/${base}"
+    echo "[*] staged dtb: ${base} <- \${BR_OUT}/images/"
+  done < <(find "${BR_OUT}/images" -type f -name '*.dtb' -print0 2>/dev/null || true)
+fi
+
 if [[ -n "${BOARD_DTBS:-}" ]]; then
-  # Board YAML dtbs: → BOARD_DTBS in env (comma-separated basenames). Stage under kernel/dtbs/
-  # for the pack artifact path "kernel" so uploads include them. When unset, no DTBs are staged
-  # (avoids shipping hundreds of unrelated multi_v7 blobs).
   while IFS= read -r requested_dtb; do
     [[ -z "$requested_dtb" ]] && continue
-    if ! src="$(resolve_dtb_source "$requested_dtb")"; then
-      echo "ERROR: Requested DTB not found under ${BR_OUT}/images or ${BR_OUT}/build: ${requested_dtb}" >&2
+    if [[ ! -f "${KERNEL_OUT}/dtbs/${requested_dtb}" ]]; then
+      echo "ERROR: Board dtbs: expects ${requested_dtb} under kernel/dtbs/ but Buildroot did not install it to ${BR_OUT}/images/ (BOARD_DTBS=${BOARD_DTBS})." >&2
+      echo "       Fix board dtbs: list or BR2_LINUX_KERNEL_INTREE_DTS_NAME so Buildroot installs this file under ${BR_OUT}/images/." >&2
+      ls -la "${BR_OUT}/images" 2>/dev/null || echo "(no ${BR_OUT}/images directory)"
       exit 1
     fi
-    cp "$src" "$KERNEL_OUT/dtbs/${requested_dtb}"
   done < <(echo "${BOARD_DTBS}" | split_csv)
-  staged_count="$(find "$KERNEL_OUT/dtbs" -mindepth 1 -maxdepth 1 -type f -name '*.dtb' 2>/dev/null | wc -l | tr -d '[:space:]')"
-  if [[ -z "${staged_count}" || "${staged_count}" -eq 0 ]]; then
-    echo "ERROR: BOARD_DTBS is set (${BOARD_DTBS}) but ${KERNEL_OUT}/dtbs/ contains no .dtb files after staging." >&2
-    echo "       Debug: BR_OUT=${BR_OUT}; list images: $(ls -1 "${BR_OUT}/images" 2>/dev/null | head -c 500 || echo '<no images dir>')" >&2
-    echo "       Expect each comma-separated basename to be resolved from ${BR_OUT}/images or ${BR_OUT}/build (see resolve_dtb_source in this script)." >&2
-    exit 1
-  fi
 fi
 
 if [[ ! -f "$KERNEL_OUT/Image" && ! -f "$KERNEL_OUT/zImage" ]]; then
