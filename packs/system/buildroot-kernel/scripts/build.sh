@@ -6,9 +6,10 @@
 #   SOURCE, ARCH, REF
 #   DEFCONFIG — pack config key "defconfig": Buildroot defconfig make target from BR2_EXTERNAL (configs/*.defconfig).
 #
-# Device trees: BR2_LINUX_KERNEL_DTS_SUPPORT should be y in defconfigs that ship DTBs; BOARD_DTBS from board
-# dtbs: YAML becomes BR2_LINUX_KERNEL_INTREE_DTS_NAME (dts basenames). DTBs are copied from $O/images/
-# only into kernel/dtbs/ for artifacts.
+# Device trees: BOARD_DTBS from board dtbs: YAML becomes BR2_LINUX_KERNEL_INTREE_DTS_NAME (dts
+# basenames). When BOARD_DTBS is set, this script forces BR2_LINUX_KERNEL_DTS_SUPPORT=y so
+# Buildroot compiles and installs the requested DTBs to $O/images/. DTBs are then copied from
+# $O/images/ into kernel/dtbs/ for artifacts.
 #
 # Optional env:
 #   BOARD_DEFCONFIG            (Linux kernel defconfig basename for BR2_LINUX_KERNEL_DEFCONFIG; boards/*/definitions.yaml key defconfig)
@@ -158,7 +159,11 @@ else
   exit 1
 fi
 
-# BR2_LINUX_KERNEL_DTS_SUPPORT=y is in arm/arm64 defconfigs; INTREE names come from board dtbs: basenames.
+# BR2_LINUX_KERNEL_DTS_SUPPORT must be y for Buildroot to compile/install DTBs. It is gated by
+# BR2_LINUX_KERNEL in linux/Config.in, so any value from the defconfig is dropped when the initial
+# `make <defconfig>` runs (BR2_LINUX_KERNEL is enabled by this script *after* defconfig load).
+# Re-assert it here whenever board dtbs: are requested, otherwise BR2_LINUX_KERNEL_INTREE_DTS_NAME
+# would be silently stripped by `make olddefconfig`.
 br2_intree_dts_names=""
 if [[ -n "${BOARD_DTBS:-}" ]]; then
   while IFS= read -r piece; do
@@ -172,9 +177,9 @@ if [[ -n "${BOARD_DTBS:-}" ]]; then
     br2_intree_dts_names+="$stem"
   done < <(echo "${BOARD_DTBS}" | split_csv)
   if [[ -n "$br2_intree_dts_names" ]]; then
-    # DTS_SUPPORT=y is expected from generic-kernel defconfigs when building DTBs; set which DTS to build/install.
+    set_yes "$CONFIG_FILE" BR2_LINUX_KERNEL_DTS_SUPPORT
     set_str "$CONFIG_FILE" BR2_LINUX_KERNEL_INTREE_DTS_NAME "$br2_intree_dts_names"
-    echo "[*] BR2_LINUX_KERNEL_INTREE_DTS_NAME=\"${br2_intree_dts_names}\" (from board dtbs:)"
+    echo "[*] BR2_LINUX_KERNEL_DTS_SUPPORT=y, BR2_LINUX_KERNEL_INTREE_DTS_NAME=\"${br2_intree_dts_names}\" (from board dtbs:)"
   fi
 else
   set_no "$CONFIG_FILE" BR2_LINUX_KERNEL_DTS_SUPPORT
