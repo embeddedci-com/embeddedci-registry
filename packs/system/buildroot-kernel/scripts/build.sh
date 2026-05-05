@@ -6,10 +6,14 @@
 #   SOURCE, ARCH, REF
 #   DEFCONFIG — pack config key "defconfig": Buildroot defconfig make target from BR2_EXTERNAL (configs/*.defconfig).
 #
-# Device trees: BOARD_DTBS from board dtbs: YAML becomes BR2_LINUX_KERNEL_INTREE_DTS_NAME (dts
-# basenames). When BOARD_DTBS is set, this script forces BR2_LINUX_KERNEL_DTS_SUPPORT=y so
-# Buildroot compiles and installs the requested DTBs to $O/images/. DTBs are then copied from
-# $O/images/ into kernel/dtbs/ for artifacts.
+# Device trees: BOARD_DTBS from board dtbs: YAML lists DTB basenames (e.g. am335x-boneblack.dtb).
+# When BOARD_DTBS is set, this script forces BR2_LINUX_KERNEL_DTS_SUPPORT=y, extracts the kernel
+# source via `make linux-extract`, then resolves each basename to its vendor-relative stem under
+# arch/<KERNEL_ARCH>/boot/dts/ (Linux 6.5+ moved ARM dts files into vendor subdirs such as
+# ti/omap/), and writes BR2_LINUX_KERNEL_INTREE_DTS_NAME with the resolved subpaths so Buildroot's
+# `make <subpath>.dtb` invocation matches the kernel's pattern rules. Buildroot installs each DTB
+# under $O/images/<basename>.dtb (notdir, since BR2_LINUX_KERNEL_DTB_KEEP_DIRNAME is unset). DTBs
+# are then copied from $O/images/ into kernel/dtbs/ for artifacts.
 #
 # Optional env:
 #   BOARD_DEFCONFIG            (Linux kernel defconfig basename for BR2_LINUX_KERNEL_DEFCONFIG; boards/*/definitions.yaml key defconfig)
@@ -151,9 +155,11 @@ set_str "$CONFIG_FILE" BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION "$REF"
 if [[ "$EFFECTIVE_ARCH" == "arm" ]]; then
   set_yes "$CONFIG_FILE" BR2_arm
   set_no "$CONFIG_FILE" BR2_aarch64
+  KERNEL_ARCH="arm"
 elif [[ "$EFFECTIVE_ARCH" == "arm64" || "$EFFECTIVE_ARCH" == "aarch64" ]]; then
   set_no "$CONFIG_FILE" BR2_arm
   set_yes "$CONFIG_FILE" BR2_aarch64
+  KERNEL_ARCH="arm64"
 else
   echo "ERROR: Unsupported arch=$EFFECTIVE_ARCH (expected arm or arm64)"
   exit 1
@@ -164,28 +170,81 @@ fi
 # `make <defconfig>` runs (BR2_LINUX_KERNEL is enabled by this script *after* defconfig load).
 # Re-assert it here whenever board dtbs: are requested, otherwise BR2_LINUX_KERNEL_INTREE_DTS_NAME
 # would be silently stripped by `make olddefconfig`.
-br2_intree_dts_names=""
+#
+# We collect bare DTS basenames here only as a placeholder for the first olddefconfig pass: the
+# Buildroot `BR_BUILDING` sanity checks reject DTS_SUPPORT=y combined with an empty INTREE_DTS_NAME,
+# and we need a valid .config to run `make linux-extract`. After extraction we rewrite the names
+# with the actual vendor subpaths (Linux 6.5+ moved ARM dts files into arch/arm/boot/dts/<vendor>/).
+br2_intree_dts_basenames=""
 if [[ -n "${BOARD_DTBS:-}" ]]; then
   while IFS= read -r piece; do
     [[ -z "$piece" ]] && continue
     stem="${piece%.dtb}"
     stem="${stem%.dts}"
     [[ -z "$stem" ]] && continue
-    if [[ -n "$br2_intree_dts_names" ]]; then
-      br2_intree_dts_names+=" "
+    if [[ -n "$br2_intree_dts_basenames" ]]; then
+      br2_intree_dts_basenames+=" "
     fi
-    br2_intree_dts_names+="$stem"
+    br2_intree_dts_basenames+="$stem"
   done < <(echo "${BOARD_DTBS}" | split_csv)
-  if [[ -n "$br2_intree_dts_names" ]]; then
+  if [[ -n "$br2_intree_dts_basenames" ]]; then
     set_yes "$CONFIG_FILE" BR2_LINUX_KERNEL_DTS_SUPPORT
-    set_str "$CONFIG_FILE" BR2_LINUX_KERNEL_INTREE_DTS_NAME "$br2_intree_dts_names"
-    echo "[*] BR2_LINUX_KERNEL_DTS_SUPPORT=y, BR2_LINUX_KERNEL_INTREE_DTS_NAME=\"${br2_intree_dts_names}\" (from board dtbs:)"
+    set_str "$CONFIG_FILE" BR2_LINUX_KERNEL_INTREE_DTS_NAME "$br2_intree_dts_basenames"
   fi
 else
   set_no "$CONFIG_FILE" BR2_LINUX_KERNEL_DTS_SUPPORT
 fi
 
 make "${MAKE_ARGS[@]}" olddefconfig
+
+if [[ -n "$br2_intree_dts_basenames" ]]; then
+  echo "[*] Extracting Linux source to resolve DTS subpaths"
+  make "${MAKE_ARGS[@]}" linux-extract
+
+  LINUX_BUILD_DIR=""
+  for d in "$BR_OUT/build/linux-"*; do
+    [[ -d "$d/arch/$KERNEL_ARCH/boot/dts" ]] || continue
+    LINUX_BUILD_DIR="$d"
+    break
+  done
+  if [[ -z "$LINUX_BUILD_DIR" ]]; then
+    echo "ERROR: cannot locate extracted linux source under $BR_OUT/build/ (looked for linux-*/arch/$KERNEL_ARCH/boot/dts/)" >&2
+    ls -la "$BR_OUT/build" 2>/dev/null || true
+    exit 1
+  fi
+  DTS_ROOT="$LINUX_BUILD_DIR/arch/$KERNEL_ARCH/boot/dts"
+
+  br2_intree_dts_names=""
+  for stem in $br2_intree_dts_basenames; do
+    mapfile -t matches < <(find "$DTS_ROOT" -type f -name "${stem}.dts" -print)
+    if [[ "${#matches[@]}" -eq 0 ]]; then
+      echo "ERROR: ${stem}.dts not found under ${DTS_ROOT} (BOARD_DTBS=${BOARD_DTBS})." >&2
+      echo "       Verify the board dtbs: list and the kernel REF=${REF}." >&2
+      exit 1
+    fi
+    if [[ "${#matches[@]}" -gt 1 ]]; then
+      echo "ERROR: ${stem}.dts is ambiguous under ${DTS_ROOT}:" >&2
+      printf '         %s\n' "${matches[@]}" >&2
+      exit 1
+    fi
+    rel_path="${matches[0]#${DTS_ROOT}/}"
+    rel_dir="$(dirname "$rel_path")"
+    if [[ "$rel_dir" == "." ]]; then
+      full_stem="$stem"
+    else
+      full_stem="${rel_dir}/${stem}"
+    fi
+    if [[ -n "$br2_intree_dts_names" ]]; then
+      br2_intree_dts_names+=" "
+    fi
+    br2_intree_dts_names+="$full_stem"
+  done
+
+  set_str "$CONFIG_FILE" BR2_LINUX_KERNEL_INTREE_DTS_NAME "$br2_intree_dts_names"
+  echo "[*] BR2_LINUX_KERNEL_INTREE_DTS_NAME=\"${br2_intree_dts_names}\" (resolved from board dtbs:)"
+  make "${MAKE_ARGS[@]}" olddefconfig
+fi
+
 make "${MAKE_ARGS[@]}" linux-reconfigure
 # Buildroot has no top-level "linux-dtbs" target; the linux package builds/installs DTBs as part
 # of "make linux" (see linux/linux.mk: LINUX_BUILD_CMDS → LINUX_BUILD_DTB + LINUX_INSTALL_DTB).
