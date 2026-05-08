@@ -1,6 +1,6 @@
 # Example (select this board as a build target):
 #   targets:
-#     - id: beagleboard-black-c3
+#     - id: beaglebone-black-c3
 type: board
 # board architecture
 platform: am335x

@@ -2,7 +2,7 @@
 #   builds:
 #     my-build:
 #       targets:
-#         - id: beagleboard-black-c3   # sent as device_type on agent device claim
+#         - id: beaglebone-black-c3   # sent as device_type on agent device claim
 #       packs:
 #         - id: test/hardware
 #           config:
